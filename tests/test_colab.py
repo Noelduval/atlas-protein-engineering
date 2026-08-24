@@ -332,6 +332,36 @@ def test_failed_stage_prints_complete_subprocess_evidence(
     assert "must-not-be-printed" not in diagnostic
 
 
+def test_notebook_subprocesses_override_colab_matplotlib_backend(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    recorded: dict[str, object] = {}
+
+    class Completed:
+        returncode = 0
+        stdout = ""
+        stderr = ""
+
+    class FakeSubprocess:
+        @staticmethod
+        def run(command: list[str], **kwargs: object) -> Completed:
+            recorded["command"] = command
+            recorded.update(kwargs)
+            return Completed()
+
+    monkeypatch.setenv("MPLBACKEND", "module://matplotlib_inline.backend_inline")
+    run_bootstrap_command = _notebook_function(
+        "hardware-check",
+        "run_bootstrap_command",
+        {"subprocess": FakeSubprocess},
+    )
+
+    run_bootstrap_command("Headless preflight", ["python", "-m", "atlas"])
+
+    assert recorded["env"]["MPLBACKEND"] == "Agg"
+    assert os.environ["MPLBACKEND"] == "module://matplotlib_inline.backend_inline"
+
+
 def test_notebook_stage_wrapper_runs_generated_scientific_command(
     tmp_path: Path,
 ) -> None:
