@@ -182,6 +182,38 @@ def test_notebook_host_kernel_never_imports_atlas() -> None:
     assert not [name for name in imported if name == "atlas" or name.startswith("atlas.")]
 
 
+def test_notebook_generated_provenance_script_is_valid_python() -> None:
+    cell = _notebook_cell("activate-atlas-install")
+    tree = ast.parse("".join(cell["source"]))
+    assignment = next(
+        node
+        for node in tree.body
+        if isinstance(node, ast.Assign)
+        and any(
+            isinstance(target, ast.Name) and target.id == "provenance_script"
+            for target in node.targets
+        )
+    )
+    namespace = {
+        "ATLAS_SHA": "atlas-sha",
+        "THERMOMPNN_REV": "thermompnn-sha",
+        "THERMOMPNN_D_REV": "thermompnn-d-sha",
+        "input_sha": "23wn-sha",
+        "RUN_ID": "atlas-t4-test",
+        "RUN_DIR": Path("/content/checkpoints/atlas-t4-test"),
+    }
+    exec(
+        compile(
+            ast.Module(body=[assignment], type_ignores=[]),
+            "notebook-generated-provenance",
+            "exec",
+        ),
+        namespace,
+    )
+
+    compile(namespace["provenance_script"], "colab-provenance-script", "exec")
+
+
 def test_notebook_configuration_and_stage_cells_are_executable() -> None:
     notebook = json.loads(Path("notebooks/Atlas_DP622_Colab.ipynb").read_text())
     tagged = {
