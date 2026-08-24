@@ -74,7 +74,7 @@ def test_thermompnn_prefers_checkout_datasets_module(
         "    ])\n"
         "    writer.writeheader()\n"
         "    writer.writerow({\n"
-        "        'ddG_pred': -0.42, 'position': 91,\n"
+        "        'ddG_pred': -0.42, 'position': 90,\n"
         "        'wildtype': 'Y', 'mutation': 'F'\n"
         "    })\n"
     )
@@ -94,7 +94,7 @@ def test_thermompnn_normalizes_real_shaped_output(tmp_path: Path) -> None:
         out_dir = Path(command[command.index("--out_dir") + 1])
         out_dir.mkdir(parents=True, exist_ok=True)
         pd.DataFrame(
-            [{"ddG_pred": -0.42, "position": 91, "wildtype": "Y", "mutation": "F"}]
+            [{"ddG_pred": -0.42, "position": 90, "wildtype": "Y", "mutation": "F"}]
         ).to_csv(out_dir / "ThermoMPNN_inference_input.csv", index=False)
         return subprocess.CompletedProcess(command, 0, "ok", "")
 
@@ -105,6 +105,22 @@ def test_thermompnn_normalizes_real_shaped_output(tmp_path: Path) -> None:
     assert scores.loc[0, "predicted_ddg_or_score"] == pytest.approx(-0.42)
     assert scores.loc[0, "model_used"] == "ThermoMPNN"
     assert "stability" in scores.loc[0, "interpretation"].lower()
+
+
+def test_thermompnn_maps_zero_based_upstream_positions_to_dp622_numbering(
+    tmp_path: Path,
+) -> None:
+    raw = tmp_path / "ThermoMPNN_inference_input.csv"
+    pd.DataFrame(
+        [{"ddG_pred": -0.42, "position": 90, "wildtype": "Y", "mutation": "F"}]
+    ).to_csv(raw, index=False)
+
+    scores = ThermoMPNNRunner(tmp_path).normalize_existing(
+        raw, [SINGLE], tmp_path / "normalized"
+    )
+
+    assert scores.loc[0, "variant_id"] == "Y91F"
+    assert scores.loc[0, "predicted_ddg_or_score"] == pytest.approx(-0.42)
 
 
 def test_thermompnn_rejects_missing_columns(tmp_path: Path) -> None:
@@ -148,8 +164,8 @@ def test_thermompnn_reuses_genuine_full_sweep_for_later_selection(
     raw = tmp_path / "ThermoMPNN_inference_input.csv"
     pd.DataFrame(
         [
-            {"ddG_pred": -0.42, "position": 91, "wildtype": "Y", "mutation": "F"},
-            {"ddG_pred": -0.31, "position": 40, "wildtype": "D", "mutation": "A"},
+            {"ddG_pred": -0.42, "position": 90, "wildtype": "Y", "mutation": "F"},
+            {"ddG_pred": -0.31, "position": 39, "wildtype": "D", "mutation": "A"},
         ]
     ).to_csv(raw, index=False)
     novel = StabilityVariant("D40A", "D40A", "D64A")
@@ -177,6 +193,34 @@ def test_thermompnn_d_normalizes_double_output(tmp_path: Path) -> None:
     assert scores.loc[0, "model_used"] == "ThermoMPNN-D epistatic"
     assert scores.loc[0, "predicted_ddg_or_score"] == pytest.approx(1.7)
     assert scores.loc[0, "mutation_set"] == "Y91F:D126A"
+
+
+def test_thermompnn_d_accepts_chain_qualified_deposited_numbering(
+    tmp_path: Path,
+) -> None:
+    repo = _repo(tmp_path, "v2_ssm.py")
+
+    def succeed(command, **kwargs):
+        prefix = Path(command[command.index("--out") + 1])
+        prefix.parent.mkdir(parents=True, exist_ok=True)
+        pd.DataFrame(
+            [
+                {
+                    "ddG (kcal/mol)": 1.7,
+                    "Mutation": "YA115F:DA150A",
+                    "CA-CA Distance": 9.0,
+                }
+            ]
+        ).to_csv(prefix.with_suffix(".csv"), index=False)
+        return subprocess.CompletedProcess(command, 0, "ok", "")
+
+    scores = ThermoMPNNDRunner(repo, command_runner=succeed).run(
+        tmp_path / "input.pdb", [DOUBLE], tmp_path / "scores"
+    )
+
+    assert scores.loc[0, "variant_id"] == "Y91F_D126A"
+    assert scores.loc[0, "deposited_numbering"] == "Y115F:D150A"
+    assert scores.loc[0, "predicted_ddg_or_score"] == pytest.approx(1.7)
 
 
 def test_thermompnn_d_uses_checkout_first_preserved_environment(

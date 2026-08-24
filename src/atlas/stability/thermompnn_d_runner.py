@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 import subprocess
 from typing import Mapping, Sequence
 
@@ -22,6 +23,9 @@ from atlas.stability.upstream_execution import UpstreamPythonExecution
 
 
 THERMOMPNN_D_REVISION = "df9a75aaddb674a7c4c193005031fc0536d325fb"
+_DOUBLE_TOKEN = re.compile(
+    r"^(?P<wt>[A-Z])(?:(?P<chain>[A-Za-z]))?(?P<position>\d+)(?P<mut>[A-Z])$"
+)
 
 
 def _run_thermompnn_d_command(
@@ -38,7 +42,17 @@ def _run_thermompnn_d_command(
 
 
 def _canonical_double(label: str) -> tuple[str, ...]:
-    return tuple(sorted(label.replace(";", ":").split(":")))
+    tokens = label.replace(";", ":").replace("/", ":").split(":")
+    normalized: list[str] = []
+    for token in tokens:
+        match = _DOUBLE_TOKEN.fullmatch(token)
+        if match is None:
+            normalized.append(token)
+            continue
+        normalized.append(
+            f"{match.group('wt')}{match.group('position')}{match.group('mut')}"
+        )
+    return tuple(sorted(normalized))
 
 
 class ThermoMPNNDRunner:
@@ -106,15 +120,21 @@ class ThermoMPNNDRunner:
         }
         rows: list[dict[str, object]] = []
         for variant in variants:
-            key = _canonical_double(variant.mutation_set)
-            if len(key) != 2:
+            dp622_key = _canonical_double(variant.mutation_set)
+            deposited_key = _canonical_double(variant.deposited_numbering)
+            if len(dp622_key) != 2:
                 raise ScientificOutputError(
                     f"ThermoMPNN-D epistatic adapter requires two mutations: {variant.mutation_set}"
                 )
-            if key not in lookup:
+            key = next(
+                (candidate for candidate in (deposited_key, dp622_key) if candidate in lookup),
+                None,
+            )
+            if key is None:
                 raise ScientificOutputError(
                     f"ThermoMPNN-D output does not contain requested mutation {variant.mutation_set}; "
-                    f"verify the {self.distance_cutoff_a:g} Å pair cutoff"
+                    f"looked for deposited numbering {variant.deposited_numbering} and "
+                    f"raw DP622 numbering; verify the {self.distance_cutoff_a:g} Å pair cutoff"
                 )
             rows.append(
                 normalized_row(

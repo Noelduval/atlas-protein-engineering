@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 import subprocess
 from typing import Mapping, Sequence
 
@@ -22,6 +23,23 @@ from atlas.stability.upstream_execution import UpstreamPythonExecution
 
 
 THERMOMPNN_REVISION = "2b04fd370e399911b1fa5848112cc9013f084110"
+_SINGLE_MUTATION = re.compile(r"^(?P<wt>[A-Z])(?P<position>\d+)(?P<mut>[A-Z])$")
+
+
+def _upstream_zero_based_label(dp622_label: str) -> str:
+    """Translate Atlas' one-based DP622 label to ThermoMPNN's sequence index."""
+
+    match = _SINGLE_MUTATION.fullmatch(dp622_label)
+    if match is None:
+        raise ScientificOutputError(
+            f"ThermoMPNN requires one DP622 single-mutation label: {dp622_label}"
+        )
+    position = int(match.group("position")) - 1
+    if position < 0:
+        raise ScientificOutputError(
+            f"ThermoMPNN DP622 position must be one-based: {dp622_label}"
+        )
+    return f"{match.group('wt')}{position}{match.group('mut')}"
 
 
 def _run_thermompnn_command(
@@ -117,13 +135,15 @@ class ThermoMPNNRunner:
                 raise ScientificOutputError(
                     f"ThermoMPNN single-mutant adapter cannot score {variant.mutation_set}"
                 )
-            if variant.mutation_set not in lookup:
+            upstream_label = _upstream_zero_based_label(variant.mutation_set)
+            if upstream_label not in lookup:
                 raise ScientificOutputError(
-                    f"ThermoMPNN output does not contain requested mutation {variant.mutation_set}"
+                    "ThermoMPNN output does not contain requested mutation "
+                    f"{variant.mutation_set} (expected upstream label {upstream_label})"
                 )
             rows.append(
                 normalized_row(
-                    variant, "ThermoMPNN", lookup[variant.mutation_set]
+                    variant, "ThermoMPNN", lookup[upstream_label]
                 )
             )
         result = normalized_frame(rows)
