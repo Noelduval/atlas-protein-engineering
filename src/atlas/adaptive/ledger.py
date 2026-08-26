@@ -111,6 +111,21 @@ class ScientificLedger:
                 artifact_hash TEXT,
                 created_at TEXT NOT NULL
             );
+            CREATE TABLE repair_proposals (
+                repair_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                parent_id TEXT NOT NULL REFERENCES candidates(candidate_id),
+                child_id TEXT NOT NULL UNIQUE REFERENCES candidates(candidate_id),
+                proposal_json TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            );
+            CREATE TABLE repair_outcomes (
+                outcome_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                parent_id TEXT NOT NULL REFERENCES candidates(candidate_id),
+                child_id TEXT NOT NULL REFERENCES candidates(candidate_id),
+                evidence_delta_json TEXT NOT NULL,
+                disposition TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            );
             CREATE TABLE events (
                 sequence INTEGER PRIMARY KEY AUTOINCREMENT,
                 timestamp TEXT NOT NULL,
@@ -361,7 +376,76 @@ class ScientificLedger:
         ).fetchone()
         return row is not None and row["status"] == "completed"
 
+    def record_repair(self, proposal: Any) -> None:
+        payload = proposal.to_dict()
+        with self._transaction() as connection:
+            connection.execute(
+                "INSERT INTO repair_proposals(parent_id, child_id, proposal_json, created_at) "
+                "VALUES (?, ?, ?, ?)",
+                (
+                    payload["parent_id"],
+                    payload["child_id"],
+                    json.dumps(payload, sort_keys=True),
+                    self._timestamp(),
+                ),
+            )
+            event = self._append_event_in_transaction(
+                connection, "repair_proposed", payload
+            )
+        self._mirror_event(event)
+
+    def record_repair_outcome(
+        self,
+        *,
+        parent_id: str,
+        child_id: str,
+        evidence_delta: dict[str, float],
+        disposition: str,
+    ) -> None:
+        payload = {
+            "parent_id": parent_id,
+            "child_id": child_id,
+            "evidence_delta": evidence_delta,
+            "disposition": disposition,
+        }
+        with self._transaction() as connection:
+            connection.execute(
+                "INSERT INTO repair_outcomes(parent_id, child_id, evidence_delta_json, "
+                "disposition, created_at) VALUES (?, ?, ?, ?, ?)",
+                (
+                    parent_id,
+                    child_id,
+                    json.dumps(evidence_delta, sort_keys=True),
+                    disposition,
+                    self._timestamp(),
+                ),
+            )
+            event = self._append_event_in_transaction(
+                connection, "repair_evaluated", payload
+            )
+        self._mirror_event(event)
+
+    def repair_trajectory(self, parent_id: str) -> tuple[dict[str, Any], ...]:
+        rows = self._connection.execute(
+            """
+            SELECT p.proposal_json, o.evidence_delta_json, o.disposition
+            FROM repair_proposals p
+            LEFT JOIN repair_outcomes o ON o.child_id = p.child_id
+            WHERE p.parent_id = ?
+            ORDER BY p.repair_id, o.outcome_id
+            """,
+            (parent_id,),
+        ).fetchall()
+        trajectory: list[dict[str, Any]] = []
+        for row in rows:
+            record = json.loads(row["proposal_json"])
+            record["evidence_delta"] = (
+                {} if row["evidence_delta_json"] is None else json.loads(row["evidence_delta_json"])
+            )
+            record["disposition"] = row["disposition"]
+            trajectory.append(record)
+        return tuple(trajectory)
+
     def delete_candidate(self, candidate_id: str) -> None:
         del candidate_id
         raise RuntimeError("ScientificLedger is append-only; candidates cannot be deleted")
-
