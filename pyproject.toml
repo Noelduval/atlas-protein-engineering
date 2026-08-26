@@ -17,6 +17,7 @@ dependencies = [
 [project.optional-dependencies]
 dynamics = [
   "openmm>=8.2,<9",
+  "pdbfixer @ git+https://github.com/openmm/pdbfixer.git@5e658a4fb8d2b90d65ca8408c845cbf104ce7099",
 ]
 dev = [
   "pytest>=8.4,<10",
