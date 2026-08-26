@@ -8,7 +8,8 @@ separate in code and outputs:
 1. **Published experimental data** label the retrospective controls.
 2. **Computational reconstruction** describes the Q120E coordinate edit.
 3. **Computational validation** describes performance on the known-control gate.
-4. **Computationally predicted novel variants** exist only after that gate passes.
+4. **Computationally predicted novel variants** are prospective hypotheses whose
+   design evidence remains separate from retrospective method characterization.
 
 None of these imply experimental validation of a generated candidate.
 
@@ -54,21 +55,34 @@ system build still produces `skipped_unparameterized_system`, the original
 exception, and zero snapshot rows. If real dynamic geometry exists it must also
 pass; otherwise the gate transparently falls back to static geometry.
 
-## Gate and design
+## Historical gate and prospective design
 
-Y91F and D126A must each have non-regressive stability and preserved geometry.
-H172A and Y91F/D126A must each be separated by stability regression, geometry
-regression, or required-atom loss. All four conditions must hold.
+The v1 historical gate required Y91F and D126A to have non-regressive stability
+and preserved geometry, while H172A and Y91F/D126A had to be separated by a
+stability regression, geometry regression, or required-atom loss. Its genuine
+Colab execution produced `BENCHMARK_FAILED`. That result, the original
+thresholds, and the underlying artifacts are immutable.
 
-Post-gate design is intentionally small and interpretable: at most 24 nearest single alanine probes
-within 8 Å of zinc or the resolved substrate. E96, zinc ligands, benchmark sites,
-Gly/Pro, Cys, and existing Ala residues are excluded. Candidates lacking a real
-stability score or complete geometry cannot be ranked. Small doubles are deferred
-until real passing single-mutant evidence exists.
+The gate is now classified as `retrospective_method_characterization`, not a
+kill-switch for `prospective_design`. The result demonstrates that folding
+stability and static/restrained geometry do not validate a catalytic-efficiency
+phenotype. It must limit confidence and remain visible in every final report;
+it must not prevent an independently documented prospective search.
+
+Prospective design uses the four-class residue map, independent evidence axes,
+hard chemistry constraints, Pareto reasoning, adaptive exploration, failure
+memory, bounded repair, and a replicated-dynamics funnel defined in
+`docs/plans/2026-08-26-atlas-adaptive-system-design.md`. A soft regression is a
+tradeoff rather than an automatic rejection. A zero-finalist result is complete
+only after the full 5,000-candidate budget, strategy and region coverage, repair
+opportunities, and near-miss audit have all been exhausted.
 
 ## Engineering choices
 
-A direct pipeline is preferred over LangGraph because the sequence and failure
-edge are fixed. External models remain pinned, separately licensed repositories
-instead of vendored code. Fresh run directories prevent accidental overwrite.
-Tests fake only the subprocess boundary; no production path substitutes scores.
+The typed Atlas core and append-only scientific ledger are the source of truth.
+LangGraph coordinates stage routing, `REJECT / REVISE / PROMOTE` branches,
+failure-memory access, checkpoint/resume, and bounded repair without duplicating
+scientific records. External models remain pinned, separately licensed
+repositories instead of vendored code. Fresh run directories prevent accidental
+overwrite. Tests fake only explicit subprocess or compute boundaries; no
+production path substitutes invented scientific evidence.
