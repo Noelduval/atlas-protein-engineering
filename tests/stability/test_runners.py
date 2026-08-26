@@ -13,7 +13,10 @@ from atlas.stability.common import (
     ScientificOutputError,
     StabilityVariant,
 )
-from atlas.stability.thermompnn_d_runner import ThermoMPNNDRunner
+from atlas.stability.thermompnn_d_runner import (
+    TargetedThermoMPNNDRunner,
+    ThermoMPNNDRunner,
+)
 from atlas.stability.thermompnn_runner import ThermoMPNNRunner
 
 
@@ -259,3 +262,57 @@ def test_thermompnn_d_uses_checkout_first_preserved_environment(
         sys.executable,
         str((repo / "v2_ssm.py").resolve()),
     ]
+
+
+def test_targeted_thermompnn_d_submits_only_requested_double_mutants(
+    tmp_path: Path,
+) -> None:
+    repo = _repo(tmp_path, "v2_ssm.py")
+    captured: dict[str, object] = {}
+
+    def succeed(command, **kwargs):
+        captured["command"] = command
+        captured.update(kwargs)
+        request_path = Path(command[command.index("--requests") + 1])
+        requested = pd.read_csv(request_path)
+        assert requested.to_dict("records") == [
+            {
+                "variant_id": "Y91F_D126A",
+                "mutation_set": "Y91F:D126A",
+            }
+        ]
+        output_path = Path(command[command.index("--out") + 1])
+        pd.DataFrame(
+            [{"ddG (kcal/mol)": 1.7, "Mutation": "Y91F:D126A"}]
+        ).to_csv(output_path, index=False)
+        return subprocess.CompletedProcess(command, 0, "ok", "")
+
+    scores = TargetedThermoMPNNDRunner(repo, command_runner=succeed).run(
+        tmp_path / "input.pdb", [DOUBLE], tmp_path / "scores"
+    )
+
+    assert scores.loc[0, "model_used"] == "ThermoMPNN-D epistatic targeted"
+    assert scores.loc[0, "predicted_ddg_or_score"] == pytest.approx(1.7)
+    command = captured["command"]
+    assert isinstance(command, list)
+    assert Path(command[1]).name == "thermompnn_d_targeted_inference.py"
+    assert "--distance" not in command
+
+
+def test_targeted_thermompnn_d_rejects_single_mutants_before_gpu_launch(
+    tmp_path: Path,
+) -> None:
+    repo = _repo(tmp_path, "v2_ssm.py")
+    launched = False
+
+    def should_not_run(*args, **kwargs):
+        nonlocal launched
+        launched = True
+        return subprocess.CompletedProcess(args[0], 0, "", "")
+
+    with pytest.raises(ScientificOutputError, match="two mutations"):
+        TargetedThermoMPNNDRunner(repo, command_runner=should_not_run).run(
+            tmp_path / "input.pdb", [SINGLE], tmp_path / "scores"
+        )
+
+    assert launched is False
