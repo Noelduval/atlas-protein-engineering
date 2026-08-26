@@ -213,6 +213,14 @@ class ScientificLedger:
             "event_hash": row["event_hash"],
         }
 
+    def record_event(self, event_type: str, payload: dict[str, Any]) -> None:
+        """Append a non-candidate scientific/orchestration observation."""
+        if not event_type.strip():
+            raise ValueError("event_type is required")
+        with self._transaction() as connection:
+            event = self._append_event_in_transaction(connection, event_type, payload)
+        self._mirror_event(event)
+
     def add_candidate(self, candidate: CandidateRecord) -> None:
         payload = candidate.to_dict()
         try:
