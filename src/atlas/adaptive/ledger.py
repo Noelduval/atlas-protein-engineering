@@ -185,6 +185,13 @@ class ScientificLedger:
         with self.events_path.open("a", encoding="utf-8") as handle:
             handle.write(json.dumps(event, sort_keys=True) + "\n")
 
+    def _mirror_events(self, events: list[dict[str, Any]]) -> None:
+        if not events:
+            return
+        with self.events_path.open("a", encoding="utf-8") as handle:
+            for event in events:
+                handle.write(json.dumps(event, sort_keys=True) + "\n")
+
     def _sync_jsonl(self) -> None:
         if not self.events_path.exists():
             self.events_path.touch()
@@ -246,6 +253,39 @@ class ScientificLedger:
             ) from exc
         self._mirror_event(event)
 
+    def add_candidates(self, candidates: tuple[CandidateRecord, ...]) -> int:
+        """Persist a candidate batch atomically while retaining one event per record."""
+        if not candidates:
+            return 0
+        events: list[dict[str, Any]] = []
+        try:
+            with self._transaction() as connection:
+                for candidate in candidates:
+                    payload = candidate.to_dict()
+                    connection.execute(
+                        "INSERT INTO candidates(candidate_id, sequence, record_json, created_at) "
+                        "VALUES (?, ?, ?, ?)",
+                        (
+                            candidate.candidate_id,
+                            candidate.sequence,
+                            json.dumps(payload, sort_keys=True),
+                            self._timestamp(),
+                        ),
+                    )
+                    events.append(
+                        self._append_event_in_transaction(
+                            connection,
+                            "candidate_added",
+                            {"candidate_id": candidate.candidate_id, "record": payload},
+                        )
+                    )
+        except sqlite3.IntegrityError as exc:
+            raise DuplicateCandidateError(
+                "Candidate batch contains an existing ID or sequence"
+            ) from exc
+        self._mirror_events(events)
+        return len(candidates)
+
     def get_candidate(self, candidate_id: str) -> CandidateRecord | None:
         row = self._connection.execute(
             "SELECT record_json FROM candidates WHERE candidate_id = ?", (candidate_id,)
@@ -254,6 +294,12 @@ class ScientificLedger:
 
     def candidate_count(self) -> int:
         return int(self._connection.execute("SELECT COUNT(*) FROM candidates").fetchone()[0])
+
+    def candidates(self) -> tuple[CandidateRecord, ...]:
+        rows = self._connection.execute(
+            "SELECT record_json FROM candidates ORDER BY rowid"
+        ).fetchall()
+        return tuple(CandidateRecord.from_dict(json.loads(row[0])) for row in rows)
 
     def add_evidence(self, evidence: EvidenceRecord) -> None:
         payload = evidence.to_dict()
@@ -275,12 +321,60 @@ class ScientificLedger:
             )
         self._mirror_event(event)
 
+    def add_evidence_many(self, records: tuple[EvidenceRecord, ...]) -> None:
+        """Persist an evidence batch atomically while preserving append order."""
+        if not records:
+            return
+        events: list[dict[str, Any]] = []
+        with self._transaction() as connection:
+            for evidence in records:
+                payload = evidence.to_dict()
+                connection.execute(
+                    "INSERT INTO evidence(candidate_id, axis, record_json, created_at) "
+                    "VALUES (?, ?, ?, ?)",
+                    (
+                        evidence.candidate_id,
+                        evidence.axis.value,
+                        json.dumps(payload, sort_keys=True),
+                        self._timestamp(),
+                    ),
+                )
+                events.append(
+                    self._append_event_in_transaction(
+                        connection,
+                        "evidence_added",
+                        {"candidate_id": evidence.candidate_id, "record": payload},
+                    )
+                )
+        self._mirror_events(events)
+
     def evidence_for(self, candidate_id: str) -> tuple[EvidenceRecord, ...]:
         rows = self._connection.execute(
             "SELECT record_json FROM evidence WHERE candidate_id = ? ORDER BY evidence_id",
             (candidate_id,),
         ).fetchall()
         return tuple(EvidenceRecord.from_dict(json.loads(row[0])) for row in rows)
+
+    def all_evidence(self) -> tuple[EvidenceRecord, ...]:
+        rows = self._connection.execute(
+            "SELECT record_json FROM evidence ORDER BY evidence_id"
+        ).fetchall()
+        return tuple(EvidenceRecord.from_dict(json.loads(row[0])) for row in rows)
+
+    def all_decisions(self) -> tuple[dict[str, Any], ...]:
+        rows = self._connection.execute(
+            "SELECT candidate_id, route, rationale, round_index, created_at "
+            "FROM decisions ORDER BY decision_id"
+        ).fetchall()
+        return tuple(dict(row) for row in rows)
+
+    def stage_records(self, run_id: str) -> tuple[dict[str, Any], ...]:
+        rows = self._connection.execute(
+            "SELECT stage, status, context_hash, artifact_hash, created_at "
+            "FROM stages WHERE run_id = ? ORDER BY stage_id",
+            (run_id,),
+        ).fetchall()
+        return tuple(dict(row) for row in rows)
 
     def record_failure(self, failure: FailureObservation) -> None:
         payload = failure.to_dict()

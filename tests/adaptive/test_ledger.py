@@ -122,3 +122,24 @@ def test_existing_ledger_is_append_only(tmp_path: Path) -> None:
     with pytest.raises(RuntimeError, match="append-only"):
         ledger.delete_candidate(_candidate().candidate_id)
 
+
+def test_atomic_batch_persistence_and_complete_readback(tmp_path: Path) -> None:
+    ledger = ScientificLedger.create(tmp_path / "atlas.sqlite", tmp_path / "events.jsonl")
+    candidates = (_candidate("C2S"), _candidate("D3N"))
+    assert ledger.add_candidates(candidates) == 2
+    evidence = tuple(
+        EvidenceRecord.numeric(
+            candidate.candidate_id,
+            EvidenceAxis.STABILITY,
+            value=float(index),
+            uncertainty=0.1,
+            method="batch-test",
+            provenance={"test": True},
+        )
+        for index, candidate in enumerate(candidates)
+    )
+    ledger.add_evidence_many(evidence)
+
+    assert ledger.candidates() == candidates
+    assert ledger.all_evidence() == evidence
+    assert len((tmp_path / "events.jsonl").read_text().splitlines()) == 4
