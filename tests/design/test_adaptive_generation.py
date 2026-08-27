@@ -169,3 +169,42 @@ def test_rounds_can_be_allocated_after_real_feedback(design_space) -> None:
     assert all(candidate.round_index == 2 for candidate in round2)
     assert all(candidate.round_index == 3 for candidate in round3)
     assert any(set(candidate.parents).intersection(preferred) for candidate in round3[:250])
+
+
+def test_round2_consults_scoped_substitution_pattern_memory(design_space) -> None:
+    generator = AdaptiveGenerator(design_space, seed=622)
+    budget = SearchBudget(candidate_budget=5_000, round1_target=1_200, minimum_doubles=750)
+    round1 = generator.generate_round1(budget)
+    memory = (
+        FailureObservation(
+            candidate_id=None,
+            category="recurrent_stability_regression",
+            scope="substitution:distal_stability:P",
+            detail="Proline introductions repeatedly regressed in this structural region.",
+            evidence_count=8,
+            confidence=0.85,
+            source="Round-1 ThermoMPNN aggregation",
+        ),
+    )
+    round2 = generator.generate_round2(
+        budget,
+        round1=round1,
+        failure_memory=memory,
+    )
+    penalized = [
+        index
+        for index, candidate in enumerate(round2)
+        if candidate.structural_region == "distal_stability"
+        and candidate.mutations[0].mutant == "P"
+    ]
+    unpenalized = [
+        index
+        for index, candidate in enumerate(round2)
+        if not (
+            candidate.structural_region == "distal_stability"
+            and candidate.mutations[0].mutant == "P"
+        )
+    ]
+    assert penalized
+    assert unpenalized
+    assert min(penalized) > min(unpenalized)

@@ -85,7 +85,9 @@ class AdaptiveGenerator:
         )
 
     def _single_pool(
-        self, penalized_mutations: frozenset[str]
+        self,
+        penalized_mutations: frozenset[str],
+        penalized_substitutions: frozenset[str] = frozenset(),
     ) -> list[tuple[ResidueDesignRecord, str, int, bool]]:
         pool: list[tuple[ResidueDesignRecord, str, int, bool]] = []
         for record in self.design_space:
@@ -97,7 +99,14 @@ class AdaptiveGenerator:
             for substitution_rank, mutant in enumerate(substitution_order(record)):
                 label = f"{record.wildtype}{record.position}{mutant}"
                 pool.append(
-                    (record, mutant, substitution_rank, label in penalized_mutations)
+                    (
+                        record,
+                        mutant,
+                        substitution_rank,
+                        label in penalized_mutations
+                        or f"{record.structural_region}:{mutant}"
+                        in penalized_substitutions,
+                    )
                 )
         return pool
 
@@ -125,11 +134,17 @@ class AdaptiveGenerator:
         candidates = round1 + round2 + round3
         failures = tuple(failure_memory)
         penalized_mutations = self._memory_scopes(failures, "mutation:")
+        penalized_substitutions = self._memory_scopes(failures, "substitution:")
         penalized_combinations = self._memory_scopes(failures, "combination:")
         penalized_count = sum(
             1
             for candidate in candidates
             if any(mutation.label in penalized_mutations for mutation in candidate.mutations)
+            or any(
+                f"{candidate.structural_region}:{mutation.mutant}"
+                in penalized_substitutions
+                for mutation in candidate.mutations
+            )
             or candidate.mutation_set in penalized_combinations
         )
         return AdaptiveSearchResult(
@@ -148,7 +163,10 @@ class AdaptiveGenerator:
     ) -> tuple[CandidateRecord, ...]:
         """Allocate broad singles before any downstream evidence is available."""
         penalized_mutations = self._memory_scopes(failure_memory, "mutation:")
-        pool = self._single_pool(penalized_mutations)
+        penalized_substitutions = self._memory_scopes(
+            failure_memory, "substitution:"
+        )
+        pool = self._single_pool(penalized_mutations, penalized_substitutions)
         broad = sorted(
             pool,
             key=lambda item: (
@@ -178,7 +196,10 @@ class AdaptiveGenerator:
     ) -> tuple[CandidateRecord, ...]:
         """Allocate targeted singles after Round-1 evidence and failure memory exist."""
         penalized_mutations = self._memory_scopes(failure_memory, "mutation:")
-        pool = self._single_pool(penalized_mutations)
+        penalized_substitutions = self._memory_scopes(
+            failure_memory, "substitution:"
+        )
+        pool = self._single_pool(penalized_mutations, penalized_substitutions)
         round1_keys = {
             (candidate.mutations[0].position, candidate.mutations[0].mutant)
             for candidate in round1
