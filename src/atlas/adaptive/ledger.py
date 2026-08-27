@@ -46,7 +46,13 @@ class ScientificLedger:
         return ledger
 
     @classmethod
-    def open(cls, database_path: str | Path, events_path: str | Path) -> ScientificLedger:
+    def open(
+        cls,
+        database_path: str | Path,
+        events_path: str | Path,
+        *,
+        synchronize_mirror: bool = True,
+    ) -> ScientificLedger:
         database = Path(database_path)
         events = Path(events_path)
         if not database.is_file():
@@ -57,8 +63,18 @@ class ScientificLedger:
             raise LedgerIntegrityError(
                 f"Unsupported ledger schema {version}; expected {SCHEMA_VERSION}"
             )
-        ledger._sync_jsonl()
+        if synchronize_mirror:
+            ledger._sync_jsonl()
+        elif not events.exists():
+            events.touch()
         return ledger
+
+    def evidence_candidate_count(self) -> int:
+        return int(
+            self._connection.execute(
+                "SELECT COUNT(DISTINCT candidate_id) FROM evidence"
+            ).fetchone()[0]
+        )
 
     def close(self) -> None:
         self._connection.close()

@@ -43,36 +43,36 @@ class CriticPolicy:
     """Route candidates while keeping hard failures and soft tradeoffs distinct."""
 
     _SUPPORT = {
-        EvidenceAxis.STABILITY: ("maximum", 1.0),
-        EvidenceAxis.STRUCTURE_QUALITY: ("minimum", 0.5),
+        EvidenceAxis.STABILITY: ("maximum", 0.5),
+        EvidenceAxis.STRUCTURE_QUALITY: ("maximum", 0.5),
         EvidenceAxis.CATALYTIC_GEOMETRY: ("maximum", 0.75),
-        EvidenceAxis.SUBSTRATE_INTERFACE: ("minimum", 0.5),
-        EvidenceAxis.DYNAMICS: ("minimum", 0.5),
-        EvidenceAxis.LIABILITY: ("maximum", 0.4),
+        EvidenceAxis.SUBSTRATE_INTERFACE: ("minimum", 0.6),
+        EvidenceAxis.DYNAMICS: ("maximum", 1.5),
+        EvidenceAxis.LIABILITY: ("maximum", 0.3),
     }
     _WEAKNESS = {
-        EvidenceAxis.STABILITY: ("minimum", 1.0, "Predicted stability is regressive."),
+        EvidenceAxis.STABILITY: ("minimum", 1.5, "Predicted stability is regressive."),
         EvidenceAxis.STRUCTURE_QUALITY: (
-            "maximum",
-            0.4,
+            "minimum",
+            1.0,
             "Mutant-complex structural quality is weak.",
         ),
         EvidenceAxis.CATALYTIC_GEOMETRY: (
             "minimum",
-            0.75,
+            1.5,
             "Catalytic-preorganization deviation is elevated.",
         ),
         EvidenceAxis.SUBSTRATE_INTERFACE: (
             "maximum",
-            0.4,
+            0.3,
             "Substrate-interface support is weak.",
         ),
         EvidenceAxis.DYNAMICS: (
-            "maximum",
-            0.4,
+            "minimum",
+            2.5,
             "Replicated dynamics support is weak or inconsistent.",
         ),
-        EvidenceAxis.LIABILITY: ("minimum", 0.6, "Sequence/structure liability is elevated."),
+        EvidenceAxis.LIABILITY: ("minimum", 0.7, "Sequence/structure liability is elevated."),
     }
 
     @staticmethod
@@ -143,4 +143,3 @@ class CriticPolicy:
             feature_to_preserve="",
             rationale="Insufficient support for repair or promotion; no hard constraint was relaxed.",
         )
-

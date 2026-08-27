@@ -83,6 +83,15 @@ class ResidueDesignRecord:
         data["allowed_substitution_classes"] = list(self.allowed_substitution_classes)
         return data
 
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "ResidueDesignRecord":
+        payload = dict(data)
+        payload["residue_class"] = ResidueClass(payload["residue_class"])
+        payload["allowed_substitution_classes"] = tuple(
+            payload["allowed_substitution_classes"]
+        )
+        return cls(**payload)
+
 
 def _heavy_coordinates(residue) -> np.ndarray:
     return np.asarray(
@@ -247,4 +256,3 @@ def write_design_space(
     json_destination.parent.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(csv_rows).to_csv(csv_destination, index=False)
     json_destination.write_text(json.dumps(rows, indent=2, sort_keys=True) + "\n")
-

@@ -11,6 +11,7 @@ from atlas.adaptive.screening import (
     Direction,
     Evaluation,
     Objective,
+    pareto_layers,
     pareto_front,
     select_diverse_survivors,
 )
@@ -114,3 +115,41 @@ def test_diverse_survivors_span_regions_and_strategies() -> None:
     assert len(survivors) == 4
     assert len({evaluation.candidate.structural_region for evaluation in survivors}) == 4
 
+
+def test_vectorized_large_library_preserves_exact_tradeoff_front() -> None:
+    evaluations = []
+    for index in range(800):
+        candidate = CandidateRecord(
+            candidate_id=f"ATLAS-LARGE-{index:04d}",
+            sequence=f"TEST-{index}",
+            mutations=(),
+            parents=(),
+            strategy=DesignStrategy.CONSERVATIVE,
+            structural_region="scaffold_surface",
+            round_index=1,
+            hypothesis="Large-library Pareto test.",
+            intended_upside="Exercise exact vectorized sorting.",
+            expected_risk="None; test fixture.",
+        )
+        evaluations.append(
+            Evaluation(
+                candidate,
+                (
+                    _evidence(candidate.candidate_id, EvidenceAxis.STABILITY, float(index)),
+                    _evidence(
+                        candidate.candidate_id,
+                        EvidenceAxis.SUBSTRATE_INTERFACE,
+                        float(index),
+                    ),
+                ),
+            )
+        )
+
+    layers = pareto_layers(evaluations, OBJECTIVES)
+
+    assert len(layers) == 1
+    assert len(layers[0]) == 800
+
+
+def test_zero_target_returns_empty_survivor_set() -> None:
+    assert select_diverse_survivors((), OBJECTIVES, target=0) == ()

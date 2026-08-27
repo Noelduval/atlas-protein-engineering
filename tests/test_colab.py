@@ -10,7 +10,7 @@ import sys
 import pytest
 
 import atlas.colab as colab
-from atlas.colab import build_stage_command
+from atlas.colab import build_adaptive_stage_command, build_stage_command
 
 
 def _notebook_cell(tag: str) -> dict[str, object]:
@@ -79,6 +79,25 @@ def test_stage_command_uses_production_cli_and_resume_checkpoint() -> None:
         "--stop-after",
         "thermompnn-d",
     ]
+
+
+def test_adaptive_stage_command_uses_prospective_cli_and_resume() -> None:
+    command = build_adaptive_stage_command(
+        python_executable="python",
+        input_structure=Path("/content/Atlas/data/23WN.cif"),
+        output_root=Path("/content/drive/MyDrive/Atlas/checkpoints"),
+        atlas_repo=Path("/content/Atlas"),
+        thermompnn_repo=Path("/content/Atlas/.external/ThermoMPNN"),
+        thermompnn_d_repo=Path("/content/Atlas/.external/ThermoMPNN-D"),
+        run_id="atlas-adaptive-t4-abc123",
+        stop_after="round3",
+        resume=True,
+    )
+
+    assert command[:4] == ["python", "-m", "atlas", "adaptive-run"]
+    assert "--candidate-budget" in command
+    assert command[command.index("--candidate-budget") + 1] == "5000"
+    assert command[-3:] == ["--resume", "--stop-after", "round3"]
 
 
 def test_notebook_builds_one_pinned_scientific_python_environment() -> None:

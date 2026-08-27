@@ -69,3 +69,28 @@ def test_run_can_stop_after_structure_and_resume_without_models(tmp_path: Path) 
     resumed = runner.invoke(app, [*args, "--resume"])
     assert resumed.exit_code == 0, resumed.output
     assert (tmp_path / "colab-checkpoint" / "run_context.json").is_file()
+
+
+def test_adaptive_run_can_checkpoint_setup_without_model_repositories(tmp_path: Path) -> None:
+    result = runner.invoke(
+        app,
+        [
+            "adaptive-run",
+            "--input",
+            "data/23WN.cif",
+            "--output-root",
+            str(tmp_path),
+            "--atlas-repo",
+            str(Path.cwd()),
+            "--run-id",
+            "adaptive-setup",
+            "--stop-after",
+            "setup",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "stopped_after_setup" in result.output
+    run_dir = tmp_path / "adaptive-setup"
+    assert (run_dir / "design_space.csv").is_file()
+    assert (run_dir / "design_memory" / "atlas_science.sqlite").is_file()

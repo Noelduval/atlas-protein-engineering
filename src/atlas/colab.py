@@ -488,3 +488,62 @@ def build_stage_command(
     if stop_after:
         command.extend(["--stop-after", stop_after])
     return command
+
+
+def build_adaptive_stage_command(
+    *,
+    python_executable: str,
+    input_structure: str | Path,
+    output_root: str | Path,
+    atlas_repo: str | Path,
+    thermompnn_repo: str | Path,
+    thermompnn_d_repo: str | Path,
+    run_id: str,
+    candidate_budget: int = 5_000,
+    broad_target: int = 500,
+    structure_target: int = 100,
+    md_target: int = 20,
+    adversarial_target: int = 10,
+    portfolio_target: int = 5,
+    seed: int = 622,
+    stop_after: str | None = None,
+    resume: bool = False,
+) -> list[str]:
+    """Build one checkpointed prospective-design Colab invocation."""
+    command = [
+        python_executable,
+        "-m",
+        "atlas",
+        "adaptive-run",
+        "--input",
+        str(input_structure),
+        "--output-root",
+        str(output_root),
+        "--atlas-repo",
+        str(atlas_repo),
+        "--thermompnn-repo",
+        str(thermompnn_repo),
+        "--thermompnn-d-repo",
+        str(thermompnn_d_repo),
+        "--run-id",
+        run_id,
+        "--candidate-budget",
+        str(candidate_budget),
+        "--broad-target",
+        str(broad_target),
+        "--structure-target",
+        str(structure_target),
+        "--md-target",
+        str(md_target),
+        "--adversarial-target",
+        str(adversarial_target),
+        "--portfolio-target",
+        str(portfolio_target),
+        "--seed",
+        str(seed),
+    ]
+    if resume:
+        command.append("--resume")
+    if stop_after:
+        command.extend(["--stop-after", stop_after])
+    return command

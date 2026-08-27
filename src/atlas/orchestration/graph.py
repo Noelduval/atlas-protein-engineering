@@ -74,7 +74,11 @@ class AtlasOrchestrator:
 
     def _node(self, role: str) -> Callable[[OrchestrationState], dict[str, Any]]:
         def execute(state: OrchestrationState) -> dict[str, Any]:
-            ledger = ScientificLedger.open(state["ledger_path"], state["events_path"])
+            ledger = ScientificLedger.open(
+                state["ledger_path"],
+                state["events_path"],
+                synchronize_mirror=False,
+            )
             try:
                 updates = dict(self.role_executor.execute(role, state, ledger))
                 updates.update(
@@ -154,4 +158,3 @@ class AtlasOrchestrator:
 
     def resume(self, run_id: str) -> OrchestrationState:
         return self.graph.invoke(None, config=self._config(run_id))
-

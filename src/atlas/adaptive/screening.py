@@ -7,6 +7,8 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Iterable
 
+import numpy as np
+
 from atlas.adaptive.models import (
     CandidateRecord,
     EvidenceAxis,
@@ -99,6 +101,10 @@ def pareto_layers(
 ) -> tuple[tuple[Evaluation, ...], ...]:
     objectives_tuple = tuple(objectives)
     remaining = list(evaluation for evaluation in evaluations if not evaluation.hard_rejected)
+    if len(remaining) >= 512:
+        vectorized = _vectorized_pareto_layers(remaining, objectives_tuple)
+        if vectorized is not None:
+            return vectorized
     layers: list[tuple[Evaluation, ...]] = []
     while remaining:
         front_ids = {
@@ -119,6 +125,60 @@ def pareto_layers(
             for evaluation in remaining
             if evaluation.candidate.candidate_id not in front_ids
         ]
+    return tuple(layers)
+
+
+def _vectorized_pareto_layers(
+    evaluations: list[Evaluation], objectives: tuple[Objective, ...]
+) -> tuple[tuple[Evaluation, ...], ...] | None:
+    """Exact non-dominated sorting with a bounded NumPy domination matrix.
+
+    The scalar implementation remains the reference for incomplete evidence.
+    Large broad-screen batches have all configured objectives and use this
+    mathematically equivalent path to avoid Python-level all-pairs loops.
+    """
+    if not objectives:
+        raise ValueError("At least one independent objective is required")
+    values = np.empty((len(evaluations), len(objectives)), dtype=np.float64)
+    for row_index, evaluation in enumerate(evaluations):
+        by_axis = evaluation.latest_by_axis()
+        if any(objective.axis not in by_axis for objective in objectives):
+            return None
+        for column_index, objective in enumerate(objectives):
+            value = _conservative_value(by_axis[objective.axis], objective.direction)
+            values[row_index, column_index] = (
+                value if objective.direction is Direction.MINIMIZE else -value
+            )
+
+    count = len(evaluations)
+    dominates = np.zeros((count, count), dtype=np.bool_)
+    block_size = max(64, min(256, count))
+    right = values[None, :, :]
+    for start in range(0, count, block_size):
+        stop = min(count, start + block_size)
+        left = values[start:stop, None, :]
+        dominates[start:stop] = np.all(left <= right, axis=2) & np.any(
+            left < right, axis=2
+        )
+
+    domination_count = dominates.sum(axis=0, dtype=np.int64)
+    remaining = np.ones(count, dtype=np.bool_)
+    layers: list[tuple[Evaluation, ...]] = []
+    while remaining.any():
+        front = np.flatnonzero(remaining & (domination_count == 0))
+        if not len(front):
+            raise RuntimeError("Pareto domination graph contains an impossible cycle")
+        layers.append(
+            tuple(
+                sorted(
+                    (evaluations[int(index)] for index in front),
+                    key=lambda evaluation: evaluation.candidate.candidate_id,
+                )
+            )
+        )
+        remaining[front] = False
+        domination_count -= dominates[front].sum(axis=0, dtype=np.int64)
+        domination_count[~remaining] = -1
     return tuple(layers)
 
 
@@ -143,8 +203,10 @@ def select_diverse_survivors(
     target: int,
 ) -> tuple[Evaluation, ...]:
     """Fill the funnel by Pareto layer and region/strategy strata, never a score."""
-    if target < 1:
-        raise ValueError("target must be positive")
+    if target < 0:
+        raise ValueError("target cannot be negative")
+    if target == 0:
+        return ()
     selected: list[Evaluation] = []
     for layer in pareto_layers(evaluations, objectives):
         for evaluation in _round_robin_diversity(layer):
@@ -152,4 +214,3 @@ def select_diverse_survivors(
             if len(selected) == target:
                 return tuple(selected)
     return tuple(selected)
-
