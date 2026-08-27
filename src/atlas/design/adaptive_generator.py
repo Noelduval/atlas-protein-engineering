@@ -109,9 +109,45 @@ class AdaptiveGenerator:
         failure_memory: Iterable[FailureObservation] = (),
     ) -> AdaptiveSearchResult:
         """Generate adaptive rounds 1–3, reserving repairs for evaluated near-misses."""
+        round1 = self.generate_round1(budget, failure_memory=failure_memory)
+        round2 = self.generate_round2(
+            budget,
+            round1=round1,
+            position_priority=position_priority,
+            failure_memory=failure_memory,
+        )
+        round3 = self.generate_round3(
+            budget,
+            singles=round1 + round2,
+            preferred_candidate_ids=(),
+            failure_memory=failure_memory,
+        )
+        candidates = round1 + round2 + round3
         failures = tuple(failure_memory)
         penalized_mutations = self._memory_scopes(failures, "mutation:")
         penalized_combinations = self._memory_scopes(failures, "combination:")
+        penalized_count = sum(
+            1
+            for candidate in candidates
+            if any(mutation.label in penalized_mutations for mutation in candidate.mutations)
+            or candidate.mutation_set in penalized_combinations
+        )
+        return AdaptiveSearchResult(
+            candidates=candidates,
+            strategy_counts=dict(Counter(c.strategy.value for c in candidates)),
+            region_counts=dict(Counter(c.structural_region for c in candidates)),
+            round_counts=dict(Counter(c.round_index for c in candidates)),
+            failure_memory_deprioritized=penalized_count,
+        )
+
+    def generate_round1(
+        self,
+        budget: SearchBudget,
+        *,
+        failure_memory: Iterable[FailureObservation] = (),
+    ) -> tuple[CandidateRecord, ...]:
+        """Allocate broad singles before any downstream evidence is available."""
+        penalized_mutations = self._memory_scopes(failure_memory, "mutation:")
         pool = self._single_pool(penalized_mutations)
         broad = sorted(
             pool,
@@ -122,7 +158,31 @@ class AdaptiveGenerator:
             ),
         )
         round1_specs = broad[: budget.round1_target]
-        round1_keys = {(record.position, mutant) for record, mutant, _, _ in round1_specs}
+        if len(round1_specs) != budget.round1_target:
+            raise RuntimeError(
+                f"Legal design space produced {len(round1_specs)}/{budget.round1_target} "
+                "Round-1 singles"
+            )
+        return tuple(
+            self._single_candidate(record, mutant, round_index=1)
+            for record, mutant, _, _ in round1_specs
+        )
+
+    def generate_round2(
+        self,
+        budget: SearchBudget,
+        *,
+        round1: tuple[CandidateRecord, ...],
+        position_priority: Iterable[int] = (),
+        failure_memory: Iterable[FailureObservation] = (),
+    ) -> tuple[CandidateRecord, ...]:
+        """Allocate targeted singles after Round-1 evidence and failure memory exist."""
+        penalized_mutations = self._memory_scopes(failure_memory, "mutation:")
+        pool = self._single_pool(penalized_mutations)
+        round1_keys = {
+            (candidate.mutations[0].position, candidate.mutations[0].mutant)
+            for candidate in round1
+        }
         priority = tuple(dict.fromkeys(int(position) for position in position_priority))
         priority_rank = {position: index for index, position in enumerate(priority)}
         remaining = [
@@ -138,45 +198,35 @@ class AdaptiveGenerator:
             )
         )
         maximum_singles = budget.candidate_budget - budget.minimum_doubles
-        round2_capacity = max(0, maximum_singles - len(round1_specs))
+        round2_capacity = max(0, maximum_singles - len(round1))
         round2_specs = remaining[:round2_capacity]
-
-        round1 = tuple(
-            self._single_candidate(record, mutant, round_index=1)
-            for record, mutant, _, _ in round1_specs
-        )
-        round2 = tuple(
+        return tuple(
             self._single_candidate(record, mutant, round_index=2)
             for record, mutant, _, _ in round2_specs
         )
-        singles = round1 + round2
+
+    def generate_round3(
+        self,
+        budget: SearchBudget,
+        *,
+        singles: tuple[CandidateRecord, ...],
+        preferred_candidate_ids: Iterable[str] = (),
+        failure_memory: Iterable[FailureObservation] = (),
+    ) -> tuple[CandidateRecord, ...]:
+        """Allocate evidence-guided doubles from evaluated single-mutant parents."""
         if len(singles) < 2:
             raise ValueError("Design space cannot support evidence-guided combinations")
         round3_target = budget.candidate_budget - len(singles)
-        round3 = self._generate_doubles(
+        if round3_target < budget.minimum_doubles:
+            raise RuntimeError("Single-mutant allocation consumed the minimum double budget")
+        penalized_combinations = self._memory_scopes(
+            failure_memory, "combination:"
+        )
+        return self._generate_doubles(
             singles,
             target=round3_target,
-            preferred_candidate_ids=(),
+            preferred_candidate_ids=preferred_candidate_ids,
             penalized_combinations=penalized_combinations,
-        )
-        candidates = round1 + round2 + round3
-        if len(candidates) != budget.candidate_budget:
-            raise RuntimeError(
-                f"Legal design space produced {len(candidates)} candidates; "
-                f"required {budget.candidate_budget}"
-            )
-        penalized_count = sum(
-            1
-            for candidate in candidates
-            if any(mutation.label in penalized_mutations for mutation in candidate.mutations)
-            or candidate.mutation_set in penalized_combinations
-        )
-        return AdaptiveSearchResult(
-            candidates=candidates,
-            strategy_counts=dict(Counter(c.strategy.value for c in candidates)),
-            region_counts=dict(Counter(c.structural_region for c in candidates)),
-            round_counts=dict(Counter(c.round_index for c in candidates)),
-            failure_memory_deprioritized=penalized_count,
         )
 
     def _generate_doubles(
@@ -264,4 +314,3 @@ class AdaptiveGenerator:
                 continue
             persisted += 1
         return persisted
-

@@ -134,3 +134,38 @@ def test_generation_is_resume_safe_against_ledger_identity(design_space, tmp_pat
     assert persisted_second == 0
     assert ledger.candidate_count() == 250
 
+
+def test_rounds_can_be_allocated_after_real_feedback(design_space) -> None:
+    generator = AdaptiveGenerator(design_space, seed=622)
+    budget = SearchBudget(candidate_budget=5_000, round1_target=1_200, minimum_doubles=750)
+    round1 = generator.generate_round1(budget)
+    memory = (
+        FailureObservation(
+            candidate_id=None,
+            category="destabilizing_substitution",
+            scope="mutation:A37P",
+            detail="Repeated Round-1 stability regression.",
+            evidence_count=5,
+            confidence=0.9,
+            source="ThermoMPNN",
+        ),
+    )
+    round2 = generator.generate_round2(
+        budget,
+        round1=round1,
+        position_priority=(69, 67, 91),
+        failure_memory=memory,
+    )
+    preferred = tuple(candidate.candidate_id for candidate in round1[:20])
+    round3 = generator.generate_round3(
+        budget,
+        singles=round1 + round2,
+        preferred_candidate_ids=preferred,
+        failure_memory=memory,
+    )
+
+    assert len(round1) == 1_200
+    assert len(round1 + round2 + round3) == 5_000
+    assert all(candidate.round_index == 2 for candidate in round2)
+    assert all(candidate.round_index == 3 for candidate in round3)
+    assert any(set(candidate.parents).intersection(preferred) for candidate in round3[:250])
