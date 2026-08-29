@@ -20,6 +20,8 @@ from atlas.dynamics.models import (
 
 
 FORCE_FIELDS = ("amber14-all.xml", "amber14/tip3pfb.xml")
+DYNAMICS_PROTOCOL = "atlas-explicit-md-v2-staged-timestep"
+EQUILIBRATION_TIMESTEP_FS = 0.5
 CLAIM_BOUNDARY = (
     "Structural/dynamic simulation with explicit solvent and documented Zn restraints; "
     "does not simulate catalytic turnover or predict kcat/Km."
@@ -83,6 +85,40 @@ def build_replica_plan(config: ExplicitMDConfig) -> tuple[ReplicaPlan, ...]:
         )
         for index in range(config.replica_count)
     )
+
+
+def _equilibration_timestep_fs(config: ExplicitMDConfig) -> float:
+    return min(EQUILIBRATION_TIMESTEP_FS, config.timestep_fs)
+
+
+def build_equilibration_plan(
+    config: ExplicitMDConfig,
+) -> tuple[tuple[float, int], ...]:
+    """Preserve the requested equilibration duration at a stable metal-site timestep."""
+    schedule = config.position_restraint_schedule_kj_mol_nm2
+    base_steps, remainder = divmod(config.equilibration_steps, len(schedule))
+    scale = config.timestep_fs / _equilibration_timestep_fs(config)
+    plan: list[tuple[float, int]] = []
+    for segment, force_constant in enumerate(schedule):
+        nominal_steps = base_steps + (1 if segment < remainder else 0)
+        executed_steps = round(nominal_steps * scale)
+        if abs(executed_steps - nominal_steps * scale) > 1e-9:
+            raise ValueError("Equilibration timestep does not produce an integral step plan")
+        plan.append((force_constant, executed_steps))
+    return tuple(plan)
+
+
+def _replica_context_hash(preparation_context_hash: str, config: ExplicitMDConfig) -> str:
+    payload = {
+        "preparation_context_hash": preparation_context_hash,
+        "config": asdict(config),
+        "dynamics_protocol": DYNAMICS_PROTOCOL,
+        "equilibration_timestep_fs": _equilibration_timestep_fs(config),
+        "equilibration_plan": build_equilibration_plan(config),
+    }
+    return hashlib.sha256(
+        json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
 
 
 def _load_openmm():
@@ -422,7 +458,10 @@ def _completed_result(directory: Path, replica_id: int, seed: int) -> ReplicaRes
     if not summary.is_file():
         return None
     payload = json.loads(summary.read_text())
-    if payload.get("status") != "completed":
+    if (
+        payload.get("status") != "completed"
+        or payload.get("dynamics_protocol") != DYNAMICS_PROTOCOL
+    ):
         return None
     return ReplicaResult(
         replica_id=replica_id,
@@ -460,15 +499,22 @@ def run_explicit_md_replica(
     final_pdb = directory / "final.pdb"
     summary_path = directory / "replica_summary.json"
     resumed = checkpoint.is_file() and progress_path.is_file()
+    existing_progress = json.loads(progress_path.read_text()) if resumed else None
     try:
         openmm, app, unit = _load_openmm()
         prepared = prepare_explicit_system(
             pdb_path, directory / "prepared", config, seed=seed
         )
+        starting_timestep_fs = (
+            config.timestep_fs
+            if existing_progress is not None
+            and existing_progress.get("phase") == "production"
+            else _equilibration_timestep_fs(config)
+        )
         integrator = openmm.LangevinMiddleIntegrator(
             config.temperature_k * unit.kelvin,
             config.friction_per_ps / unit.picosecond,
-            config.timestep_fs * unit.femtoseconds,
+            starting_timestep_fs * unit.femtoseconds,
         )
         integrator.setRandomNumberSeed(seed)
         platform = openmm.Platform.getPlatformByName(config.platform_name)
@@ -480,16 +526,18 @@ def run_explicit_md_replica(
             platform,
             properties,
         )
+        replica_context_hash = _replica_context_hash(prepared.context_hash, config)
         if resumed:
-            progress = json.loads(progress_path.read_text())
-            if progress.get("context_hash") != prepared.context_hash:
+            progress = existing_progress
+            if progress.get("context_hash") != replica_context_hash:
                 raise RuntimeError("Replica checkpoint context does not match preparation")
             simulation.loadCheckpoint(str(checkpoint))
         else:
             progress = {
-                "context_hash": prepared.context_hash,
+                "context_hash": replica_context_hash,
                 "phase": "equilibration",
                 "equilibration_segment": 0,
+                "equilibration_steps_completed": 0,
                 "production_steps_completed": 0,
             }
             simulation.context.setPositions(prepared.positions)
@@ -503,24 +551,28 @@ def run_explicit_md_replica(
                 config.temperature_k * unit.kelvin, seed
             )
 
-        schedule = config.position_restraint_schedule_kj_mol_nm2
-        base_steps, remainder = divmod(config.equilibration_steps, len(schedule))
+        equilibration_plan = build_equilibration_plan(config)
         if progress["phase"] == "equilibration":
-            for segment in range(int(progress["equilibration_segment"]), len(schedule)):
-                force_constant = schedule[segment]
+            for segment in range(
+                int(progress["equilibration_segment"]), len(equilibration_plan)
+            ):
+                force_constant, steps = equilibration_plan[segment]
                 simulation.context.setParameter(
                     "k_position",
                     force_constant
                     * unit.kilojoule_per_mole
                     / unit.nanometer**2,
                 )
-                steps = base_steps + (1 if segment < remainder else 0)
                 simulation.step(steps)
                 progress["equilibration_segment"] = segment + 1
+                progress["equilibration_steps_completed"] = int(
+                    progress["equilibration_steps_completed"]
+                ) + steps
                 simulation.saveCheckpoint(str(checkpoint))
                 _write_json(progress_path, progress)
             progress["phase"] = "production"
             progress["production_steps_completed"] = 0
+            integrator.setStepSize(config.timestep_fs * unit.femtoseconds)
             simulation.context.setParameter(
                 "k_position", 0.0 * unit.kilojoule_per_mole / unit.nanometer**2
             )
@@ -611,11 +663,21 @@ def run_explicit_md_replica(
         _write_json(progress_path, progress)
         summary = {
             "status": "completed",
+            "dynamics_protocol": DYNAMICS_PROTOCOL,
             "replica_id": replica_id,
             "seed": seed,
-            "context_hash": prepared.context_hash,
-            "equilibration_steps": config.equilibration_steps,
+            "context_hash": replica_context_hash,
+            "preparation_context_hash": prepared.context_hash,
+            "equilibration_nominal_steps": config.equilibration_steps,
+            "equilibration_executed_steps": sum(
+                steps for _, steps in equilibration_plan
+            ),
+            "equilibration_timestep_fs": _equilibration_timestep_fs(config),
+            "equilibration_time_ps": (
+                config.equilibration_steps * config.timestep_fs / 1_000.0
+            ),
             "production_steps": config.production_steps,
+            "production_timestep_fs": config.timestep_fs,
             "production_time_ps": config.production_steps
             * config.timestep_fs
             / 1_000.0,
@@ -648,6 +710,7 @@ def run_explicit_md_replica(
             summary_path,
             {
                 "status": "invalid_simulation",
+                "dynamics_protocol": DYNAMICS_PROTOCOL,
                 "replica_id": replica_id,
                 "seed": seed,
                 "error": error,
@@ -696,6 +759,14 @@ def run_replicated_explicit_md(
             "system_label": system_label,
             "input_pdb": str(pdb_path),
             "protocol": asdict(config),
+            "effective_integration": {
+                "dynamics_protocol": DYNAMICS_PROTOCOL,
+                "equilibration_timestep_fs": _equilibration_timestep_fs(config),
+                "equilibration_executed_steps": sum(
+                    steps for _, steps in build_equilibration_plan(config)
+                ),
+                "production_timestep_fs": config.timestep_fs,
+            },
             "replicas": [
                 {
                     "replica_id": result.replica_id,
@@ -710,4 +781,3 @@ def run_replicated_explicit_md(
         },
     )
     return ReplicatedMDResult(system_label, results, manifest)
-

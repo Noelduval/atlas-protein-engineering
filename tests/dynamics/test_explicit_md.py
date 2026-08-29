@@ -8,6 +8,7 @@ import pytest
 
 from atlas.dynamics.ensemble_analysis import summarize_replicated_md
 from atlas.dynamics.explicit_md import (
+    build_equilibration_plan,
     build_replica_plan,
     prepare_explicit_system,
     run_explicit_md_replica,
@@ -35,6 +36,14 @@ def test_replica_plan_has_independent_seeds_and_documented_protocol() -> None:
     assert all(replica.production_time_ps == 500.0 for replica in plan)
     assert config.position_restraint_schedule_kj_mol_nm2[-1] == 0.0
     assert config.zinc_restraint_k_kj_mol_nm2 > 0
+
+
+def test_equilibration_plan_uses_stable_timestep_without_shortening_duration() -> None:
+    config = ExplicitMDConfig(equilibration_steps=50_000, timestep_fs=2.0)
+    plan = build_equilibration_plan(config)
+    assert [force_constant for force_constant, _ in plan] == [1_000.0, 100.0, 10.0, 0.0]
+    assert sum(steps for _, steps in plan) == 200_000
+    assert sum(steps for _, steps in plan) * 0.5 / 1_000.0 == 100.0
 
 
 def test_explicit_preparation_adds_solvent_and_tracks_fragment_termination(
@@ -175,4 +184,3 @@ def test_ensemble_summary_reports_replica_disagreement_without_hiding_axes(
     assert payload["replica_disagreement"]["substrate_rmsd_a"]["range"] > 0.5
     assert "universal_score" not in payload
     assert summary.replica_summary_csv.is_file()
-

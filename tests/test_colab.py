@@ -159,7 +159,7 @@ def test_notebook_builds_one_pinned_scientific_python_environment() -> None:
         "pandas==2.2.3",
         "pytorch-lightning==2.4.0",
         "torchmetrics==1.6.0",
-        "openmm==8.2.0",
+        "openmm[cuda12]==8.2.0",
     } <= set(commands[3])
     assert all(scientific_python in command for command in commands[2:])
 
@@ -230,7 +230,10 @@ def test_notebook_generated_provenance_script_is_valid_python() -> None:
         namespace,
     )
 
-    compile(namespace["provenance_script"], "colab-provenance-script", "exec")
+    provenance_script = namespace["provenance_script"]
+    compile(provenance_script, "colab-provenance-script", "exec")
+    assert "import openmm" in provenance_script
+    assert "getPlatformByName('CUDA')" in provenance_script
 
 
 def test_notebook_configuration_and_stage_cells_are_executable() -> None:
