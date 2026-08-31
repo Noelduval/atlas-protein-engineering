@@ -1,7 +1,7 @@
 [project]
 name = "atlas-therapeutic-optimization"
 version = "1.0.0"
-description = "Validation-gated stability and catalytic-geometry screening for DP622 mutations."
+description = "Mechanism-aware adaptive prioritization of experimentally untested DP622 mutation hypotheses."
 readme = "README.md"
 requires-python = ">=3.10,<3.13"
 dependencies = [

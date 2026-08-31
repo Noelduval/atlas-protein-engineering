@@ -1,9 +1,7 @@
-"""Genuine model, mutant-complex, and replicated-MD backend for adaptive Atlas."""
+"""Genuine stability and mutant-complex backend for adaptive Atlas."""
 
 from __future__ import annotations
 
-from dataclasses import asdict
-import math
 from pathlib import Path
 
 from atlas.adaptive.models import (
@@ -13,10 +11,8 @@ from atlas.adaptive.models import (
     EvidenceStatus,
     HardViolation,
 )
-from atlas.adaptive_pipeline import CandidateDynamicsResult, CandidateStructureResult
-from atlas.dynamics.ensemble_analysis import summarize_replicated_md
-from atlas.dynamics.explicit_md import run_replicated_explicit_md
-from atlas.dynamics.models import DynamicsConfig, ExplicitMDConfig
+from atlas.adaptive_pipeline import CandidateStructureResult
+from atlas.dynamics.models import DynamicsConfig
 from atlas.geometry.catalytic_metrics import GeometryRecord, measure_geometry
 from atlas.stability.common import StabilityVariant
 from atlas.stability.thermompnn_d_runner import (
@@ -112,13 +108,11 @@ class OfficialAdaptiveBackend:
         thermompnn_repo: Path,
         thermompnn_d_repo: Path,
         relaxation_config: DynamicsConfig,
-        explicit_md_config: ExplicitMDConfig,
         seed: int,
     ) -> None:
         self.single = ThermoMPNNRunner(thermompnn_repo)
         self.double = TargetedThermoMPNNDRunner(thermompnn_d_repo)
         self.relaxation_config = relaxation_config
-        self.explicit_md_config = explicit_md_config
         self.seed = seed
         self._reference_geometry: GeometryRecord | None = None
         self._reference_path: Path | None = None
@@ -319,182 +313,4 @@ class OfficialAdaptiveBackend:
             evidence=evidence,
             hard_violations=result.hard_violations,
             artifact_path=result.provenance_json,
-        )
-
-    def evaluate_dynamics(
-        self,
-        pdb_path: Path,
-        candidate: CandidateRecord | None,
-        output_dir: Path,
-        *,
-        system_label: str,
-    ) -> CandidateDynamicsResult:
-        if candidate is None:
-            # Register the canonical active-like reference even when every earlier
-            # stage was resumed from checkpoints in a fresh Python process.
-            self._reference(pdb_path)
-        replicated = run_replicated_explicit_md(
-            pdb_path,
-            output_dir,
-            self.explicit_md_config,
-            system_label=system_label,
-        )
-        ensemble = summarize_replicated_md(replicated.replicas, output_dir / "ensemble")
-        evidence: list[EvidenceRecord] = []
-        violations: list[HardViolation] = []
-        if candidate is not None:
-            if ensemble.completed_replicas < 2:
-                violation = HardViolation(
-                    candidate.candidate_id,
-                    "invalid_or_insufficient_replicated_simulation",
-                    f"Only {ensemble.completed_replicas} valid replicas; at least two required.",
-                )
-                violations.append(violation)
-                evidence.append(
-                    _invalid_evidence(
-                        candidate,
-                        EvidenceAxis.DYNAMICS,
-                        method="replicated explicit-solvent OpenMM MD",
-                        detail=violation.detail,
-                        artifact=ensemble.summary_json,
-                    )
-                )
-            else:
-                import json
-
-                summary = json.loads(ensemble.summary_json.read_text())
-                axes = summary.get("ensemble_axes", {})
-                disagreement = summary.get("replica_disagreement", {})
-
-                def mean(metric: str) -> float:
-                    return float(axes[metric]["replica_mean"])
-
-                def std(metric: str) -> float:
-                    return float(disagreement[metric]["standard_deviation"])
-
-                reference = self._reference_geometry
-                comparisons = {
-                    "zn_h95_distance_a": None if reference is None else reference.zn_h95_ne2_distance_a,
-                    "zn_h99_distance_a": None if reference is None else reference.zn_h99_ne2_distance_a,
-                    "zn_e122_distance_a": None if reference is None else reference.zn_e122_oxygen_distance_a,
-                    "zn_scissile_o_distance_a": None if reference is None else reference.zn_scissile_oxygen_distance_a,
-                }
-                required_metrics = {
-                    "substrate_centroid_drift_a",
-                    "contact_fraction",
-                    "active_site_rmsd_a",
-                    *comparisons,
-                }
-                invalid_metrics = []
-                for metric in sorted(required_metrics):
-                    try:
-                        values = (mean(metric), std(metric))
-                    except (KeyError, TypeError, ValueError):
-                        invalid_metrics.append(metric)
-                        continue
-                    if not all(math.isfinite(value) for value in values):
-                        invalid_metrics.append(metric)
-                missing_reference = [
-                    metric for metric, value in comparisons.items() if value is None
-                ]
-                if invalid_metrics or missing_reference:
-                    detail = (
-                        "Required ensemble metrics/reference distances were unavailable or "
-                        f"non-finite; metrics={invalid_metrics}, reference={missing_reference}."
-                    )
-                    violation = HardViolation(
-                        candidate.candidate_id,
-                        "invalid_replicated_simulation_metrics",
-                        detail,
-                    )
-                    violations.append(violation)
-                    evidence.append(
-                        _invalid_evidence(
-                            candidate,
-                            EvidenceAxis.DYNAMICS,
-                            method="replicated explicit-solvent OpenMM MD",
-                            detail=detail,
-                            artifact=ensemble.summary_json,
-                        )
-                    )
-                    evidence.append(_unavailable_activity(candidate, ensemble.summary_json))
-                    return CandidateDynamicsResult(
-                        candidate_id=candidate.candidate_id,
-                        evidence=tuple(evidence),
-                        hard_violations=tuple(violations),
-                        artifact_path=ensemble.summary_json,
-                        completed_replicas=ensemble.completed_replicas,
-                    )
-                zinc_deviations = {
-                    metric: abs(mean(metric) - float(reference_value))
-                    for metric, reference_value in comparisons.items()
-                }
-                provenance = {
-                    "artifact_path": str(ensemble.summary_json),
-                    "manifest_path": str(replicated.manifest_json),
-                    "evidence_tier": "COMPUTATIONAL_SUPPORT",
-                    "completed_replicas": ensemble.completed_replicas,
-                    "invalid_replicas": ensemble.invalid_replicas,
-                    "protocol": asdict(self.explicit_md_config),
-                    "claim_boundary": (
-                        "Structural/dynamic evidence; not catalytic turnover or kcat/Km."
-                    ),
-                }
-                evidence.extend(
-                    (
-                        EvidenceRecord.numeric(
-                            candidate.candidate_id,
-                            EvidenceAxis.DYNAMICS,
-                            value=mean("substrate_centroid_drift_a"),
-                            uncertainty=std("substrate_centroid_drift_a"),
-                            method="replicated explicit-solvent substrate centroid drift",
-                            provenance=provenance,
-                            payload={
-                                "ensemble_axes": axes,
-                                "replica_disagreement": disagreement,
-                                "direction": "lower drift",
-                            },
-                        ),
-                        EvidenceRecord.numeric(
-                            candidate.candidate_id,
-                            EvidenceAxis.SUBSTRATE_INTERFACE,
-                            value=mean("contact_fraction"),
-                            uncertainty=std("contact_fraction"),
-                            method="replicated Aβ contact occupancy",
-                            provenance=provenance,
-                            payload={"direction": "higher contact occupancy"},
-                        ),
-                        EvidenceRecord.numeric(
-                            candidate.candidate_id,
-                            EvidenceAxis.CATALYTIC_GEOMETRY,
-                            value=max(zinc_deviations.values()),
-                            uncertainty=max(
-                                std(metric) for metric in zinc_deviations
-                            ),
-                            method="replicated Zn/preorganization distance deviation",
-                            provenance=provenance,
-                            payload={
-                                "zinc_distance_deviations_a": zinc_deviations,
-                                "direction": "lower deviation",
-                                "not_reaction_simulation": True,
-                            },
-                        ),
-                        EvidenceRecord.numeric(
-                            candidate.candidate_id,
-                            EvidenceAxis.STRUCTURE_QUALITY,
-                            value=mean("active_site_rmsd_a"),
-                            uncertainty=std("active_site_rmsd_a"),
-                            method="replicated active-site RMSD",
-                            provenance=provenance,
-                            payload={"direction": "lower RMSD"},
-                        ),
-                    )
-                )
-            evidence.append(_unavailable_activity(candidate, ensemble.summary_json))
-        return CandidateDynamicsResult(
-            candidate_id=None if candidate is None else candidate.candidate_id,
-            evidence=tuple(evidence),
-            hard_violations=tuple(violations),
-            artifact_path=ensemble.summary_json,
-            completed_replicas=ensemble.completed_replicas,
         )

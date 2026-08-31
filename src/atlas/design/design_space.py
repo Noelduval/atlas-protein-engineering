@@ -76,6 +76,7 @@ class ResidueDesignRecord:
     protection_reason: str
     allowed_substitution_classes: tuple[str, ...]
     classification_rule: str
+    packing_neighbor_positions: tuple[int, ...] = ()
 
     def to_dict(self) -> dict[str, Any]:
         data = asdict(self)
@@ -89,6 +90,9 @@ class ResidueDesignRecord:
         payload["residue_class"] = ResidueClass(payload["residue_class"])
         payload["allowed_substitution_classes"] = tuple(
             payload["allowed_substitution_classes"]
+        )
+        payload["packing_neighbor_positions"] = tuple(
+            payload.get("packing_neighbor_positions", ())
         )
         return cls(**payload)
 
@@ -105,14 +109,20 @@ def _minimum_distance(left: np.ndarray, right: np.ndarray) -> float:
 
 
 def _packing_neighbors(residues: list, index: int, cutoff_a: float = 4.5) -> int:
+    return len(_packing_neighbor_positions(residues, index, cutoff_a))
+
+
+def _packing_neighbor_positions(
+    residues: list, index: int, cutoff_a: float = 4.5
+) -> tuple[int, ...]:
     focus = _heavy_coordinates(residues[index])
-    neighbors = 0
+    neighbors: list[int] = []
     for other_index, other in enumerate(residues):
         if other_index == index:
             continue
         if _minimum_distance(focus, _heavy_coordinates(other)) <= cutoff_a:
-            neighbors += 1
-    return neighbors
+            neighbors.append(int(other.id[1]))
+    return tuple(sorted(neighbors))
 
 
 def _region(position: int, min_substrate_a: float, min_zinc_a: float, relative_sasa: float) -> str:
@@ -233,6 +243,9 @@ def classify_design_space(
                     residue_class, structural_region
                 ),
                 classification_rule=rule,
+                packing_neighbor_positions=_packing_neighbor_positions(
+                    protein, index
+                ),
             )
         )
     return tuple(records)
@@ -249,6 +262,9 @@ def write_design_space(
         csv_row = dict(row)
         csv_row["allowed_substitution_classes"] = ";".join(
             row["allowed_substitution_classes"]
+        )
+        csv_row["packing_neighbor_positions"] = ";".join(
+            str(position) for position in row["packing_neighbor_positions"]
         )
         csv_rows.append(csv_row)
     csv_destination, json_destination = Path(csv_path), Path(json_path)

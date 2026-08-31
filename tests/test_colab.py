@@ -96,6 +96,7 @@ def test_adaptive_stage_command_uses_prospective_cli_and_resume() -> None:
 
     assert command[:4] == ["python", "-m", "atlas", "adaptive-run"]
     assert "--candidate-budget" in command
+    assert "--md-target" not in command
     assert command[command.index("--candidate-budget") + 1] == "5000"
     assert command[-3:] == ["--resume", "--stop-after", "round3"]
 

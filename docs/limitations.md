@@ -1,5 +1,11 @@
 # Limitations
 
+## Atlas v1 production evidence boundary
+
+Replicated explicit-solvent OpenMM MD was tested on the canonical DP622/Aβ/Zn reference and failed reproducible numerical and catalytic/substrate-geometry validation. It is therefore excluded from adaptive finalist discrimination, evidence completeness, Pareto screening, critic routing, repair, and portfolio selection. Missing dynamics evidence does not penalize candidates. Restrained mutant-complex preparation/minimization remains structure-building evidence, not validated dynamics or catalytic-activity prediction.
+
+ThermoMPNN and ThermoMPNN-D are separate upstream stability models. Their raw outputs are preserved but not treated as commensurate; adaptive screening uses model-specific empirical ranks without claiming calibration between models.
+
 - The starting structure is the inactive DP622 E96Q deposited complex. Q120E is
   an unrelaxed coordinate edit and not an experimentally determined active state.
 - Only Aβ residues 34–41 are resolved. Metrics cannot represent the flexibility

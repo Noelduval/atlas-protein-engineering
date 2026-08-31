@@ -88,7 +88,6 @@ def test_promote_route_executes_deeper_science_and_portfolio(tmp_path: Path) -> 
         "structure",
         "critic",
         "deeper_evaluation",
-        "simulation",
         "activity_evidence",
         "adversarial_critic",
         "portfolio_selection",
@@ -153,4 +152,3 @@ def test_sqlite_checkpoint_resume_does_not_repeat_completed_roles(tmp_path: Path
     assert counts["generation"] == 1
     assert counts["structure"] == 2
     assert final["terminal_reason"] == "portfolio_complete"
-

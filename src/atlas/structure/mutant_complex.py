@@ -14,6 +14,7 @@ from Bio.PDB import PDBParser
 from atlas.adaptive.models import CandidateRecord, HardViolation
 from atlas.structure.chemistry import (
     detect_catastrophic_clashes,
+    validate_unintended_zinc_coordination,
     validate_required_zinc_coordination,
 )
 
@@ -185,6 +186,8 @@ def build_mutant_complex(
     retained = len(rows) - modeled
 
     violations = list(validate_required_zinc_coordination(raw_pdb, candidate.candidate_id))
+    if candidate.requires_candidate_geometry:
+        violations.extend(validate_unintended_zinc_coordination(raw_pdb, candidate))
     clashes = detect_catastrophic_clashes(raw_pdb)
     violations.extend(
         HardViolation(
@@ -248,4 +251,3 @@ def build_mutant_complex(
         hard_violations=tuple(violations),
         warnings=tuple(warnings),
     )
-

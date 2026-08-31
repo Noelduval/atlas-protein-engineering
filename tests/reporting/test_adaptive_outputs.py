@@ -103,7 +103,6 @@ def test_adaptive_outputs_write_dossier_exports_figures_and_report(tmp_path: Pat
                 (EvidenceAxis.STRUCTURE_QUALITY, 0.2),
                 (EvidenceAxis.CATALYTIC_GEOMETRY, 0.3),
                 (EvidenceAxis.SUBSTRATE_INTERFACE, 0.8),
-                (EvidenceAxis.DYNAMICS, 0.5),
                 (EvidenceAxis.LIABILITY, 0.1),
             )
         )
@@ -114,7 +113,7 @@ def test_adaptive_outputs_write_dossier_exports_figures_and_report(tmp_path: Pat
             "decision": "PROMOTE",
             "strongest_case_for_synthesis": "Independent axes support a falsifiable test.",
             "strongest_case_against_synthesis": "No catalytic turnover was predicted.",
-            "unresolved_uncertainty": "Short MD is not converged.",
+            "unresolved_uncertainty": "Static structural evidence is model-dependent.",
             "falsification_result": "No Aβ cleavage relative to reference.",
         }
     ]
@@ -122,7 +121,6 @@ def test_adaptive_outputs_write_dossier_exports_figures_and_report(tmp_path: Pat
         "generated_evaluated": 5_001,
         "broad_survivors": 500,
         "structural_analyses": 100,
-        "md_candidates": 20,
         "adversarial_review": 10,
         "finalists": 1,
         "langgraph_routes": 10,
@@ -143,15 +141,6 @@ def test_adaptive_outputs_write_dossier_exports_figures_and_report(tmp_path: Pat
                 "hard_violations": [],
             }
         ],
-        md_records=[
-            {
-                "candidate_id": candidate.candidate_id,
-                "system_label": candidate.candidate_id,
-                "artifact_path": str(tmp_path / "missing-ensemble.json"),
-                "completed_replicas": 3,
-                "hard_violations": [],
-            }
-        ],
         adversarial_reviews=reviews,
         reference_pdb=reference,
         seed=622,
@@ -164,13 +153,21 @@ def test_adaptive_outputs_write_dossier_exports_figures_and_report(tmp_path: Pat
     assert "EXPERIMENTALLY UNTESTED" in text
     assert "Strongest argument against synthesis" in text
     assert "Falsifiable experimental hypothesis" in text
+    assert "Replicated MD evidence" not in text
     assert (tmp_path / "exports" / "finalists.fasta").is_file()
+    assert (tmp_path / "exports" / "fastas" / f"{candidate.candidate_id}.fasta").is_file()
+    assert (tmp_path / "exports" / "finalist_evidence.csv").is_file()
+    assert (tmp_path / "exports" / "finalist_evidence.json").is_file()
     assert (tmp_path / "exports" / "structures" / f"{candidate.candidate_id}.pdb").is_file()
     assert (tmp_path / "reports" / "candidates" / f"{candidate.candidate_id}_structure.png").is_file()
     assert bundle.final_report.is_file()
     assert "5,001" in bundle.final_report.read_text()
+    assert "excluded from Atlas candidate discrimination" in bundle.final_report.read_text()
     assert (tmp_path / "figures" / "adaptive_design_funnel.png").is_file()
     assert (tmp_path / "figures" / "structural_design_map.png").is_file()
+    assert (tmp_path / "README.md").is_file()
+    assert (tmp_path / "FINALISTS.md").is_file()
+    assert (tmp_path / "reports" / "limitations_report.md").is_file()
     assert json.loads(bundle.reproducibility_manifest.read_text())["candidate_library_sha256"]
 
 
@@ -183,7 +180,7 @@ def test_zero_finalist_report_keeps_near_miss_blockers_first_class(tmp_path: Pat
         "candidate_id": "ATLAS-NEAR-MISS",
         "mutation_set": "A37P",
         "decision": "REJECT",
-        "strongest_case_against_synthesis": "Replica disagreement prevented promotion.",
+        "strongest_case_against_synthesis": "Static geometry did not support promotion.",
     }
     bundle = build_adaptive_outputs(
         run_dir=tmp_path,
@@ -195,13 +192,11 @@ def test_zero_finalist_report_keeps_near_miss_blockers_first_class(tmp_path: Pat
             "generated_evaluated": 5_000,
             "broad_survivors": 1,
             "structural_analyses": 1,
-            "md_candidates": 1,
             "adversarial_review": 1,
             "finalists": 0,
             "langgraph_routes": 1,
         },
         structure_records=[],
-        md_records=[],
         adversarial_reviews=[near_miss],
         reference_pdb=reference,
         seed=622,
@@ -210,5 +205,5 @@ def test_zero_finalist_report_keeps_near_miss_blockers_first_class(tmp_path: Pat
 
     report = bundle.final_report.read_text()
     assert "BEST_NEAR_MISS_HYPOTHESES" in report
-    assert "Replica disagreement prevented promotion" in report
+    assert "Static geometry did not support promotion" in report
     assert "ATLAS-NEAR-MISS" in report

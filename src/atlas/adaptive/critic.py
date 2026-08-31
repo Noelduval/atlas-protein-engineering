@@ -43,15 +43,18 @@ class CriticPolicy:
     """Route candidates while keeping hard failures and soft tradeoffs distinct."""
 
     _SUPPORT = {
-        EvidenceAxis.STABILITY: ("maximum", 0.5),
+        EvidenceAxis.STABILITY_MODEL_AWARE: ("maximum", 0.25),
         EvidenceAxis.STRUCTURE_QUALITY: ("maximum", 0.5),
         EvidenceAxis.CATALYTIC_GEOMETRY: ("maximum", 0.75),
         EvidenceAxis.SUBSTRATE_INTERFACE: ("minimum", 0.6),
-        EvidenceAxis.DYNAMICS: ("maximum", 1.5),
         EvidenceAxis.LIABILITY: ("maximum", 0.3),
     }
     _WEAKNESS = {
-        EvidenceAxis.STABILITY: ("minimum", 1.5, "Predicted stability is regressive."),
+        EvidenceAxis.STABILITY_MODEL_AWARE: (
+            "minimum",
+            0.75,
+            "Predicted stability is regressive within its upstream model cohort.",
+        ),
         EvidenceAxis.STRUCTURE_QUALITY: (
             "minimum",
             1.0,
@@ -66,11 +69,6 @@ class CriticPolicy:
             "maximum",
             0.3,
             "Substrate-interface support is weak.",
-        ),
-        EvidenceAxis.DYNAMICS: (
-            "minimum",
-            2.5,
-            "Replicated dynamics support is weak or inconsistent.",
         ),
         EvidenceAxis.LIABILITY: ("minimum", 0.7, "Sequence/structure liability is elevated."),
     }

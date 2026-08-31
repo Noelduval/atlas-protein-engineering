@@ -23,7 +23,12 @@ import pandas as pd
 from Bio.PDB import PDBParser
 
 from atlas.adaptive.ledger import ScientificLedger
-from atlas.adaptive.models import CandidateRecord, EvidenceAxis, EvidenceRecord
+from atlas.adaptive.models import (
+    CandidateRecord,
+    EvidenceAxis,
+    EvidenceRecord,
+    EvidenceStatus,
+)
 from atlas.design.design_space import ResidueDesignRecord
 
 
@@ -220,7 +225,6 @@ def _plot_funnel(funnel: dict[str, int], output_path: Path) -> None:
         "Generated / evaluated",
         "Broad survivors",
         "Structural analyses",
-        "MD candidates",
         "Adversarial review",
         "Finalists",
     ]
@@ -228,7 +232,6 @@ def _plot_funnel(funnel: dict[str, int], output_path: Path) -> None:
         "generated_evaluated",
         "broad_survivors",
         "structural_analyses",
-        "md_candidates",
         "adversarial_review",
         "finalists",
     ]
@@ -298,11 +301,10 @@ def _plot_finalist_axes(
     output_path: Path,
 ) -> None:
     axes = (
-        EvidenceAxis.STABILITY,
+        EvidenceAxis.STABILITY_MODEL_AWARE,
         EvidenceAxis.STRUCTURE_QUALITY,
         EvidenceAxis.CATALYTIC_GEOMETRY,
         EvidenceAxis.SUBSTRATE_INTERFACE,
-        EvidenceAxis.DYNAMICS,
         EvidenceAxis.LIABILITY,
     )
     figure, plots = plt.subplots(2, 3, figsize=(15, 8))
@@ -323,48 +325,9 @@ def _plot_finalist_axes(
             plot.text(0.5, 0.5, "Unavailable", ha="center", va="center")
             plot.set_xticks([])
         plot.set_title(axis_name.value)
+    for plot in plots.flat[len(axes):]:
+        plot.set_axis_off()
     figure.suptitle("Finalist independent evidence axes (not a universal score)")
-    figure.tight_layout()
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    figure.savefig(output_path, dpi=180)
-    plt.close(figure)
-
-
-def _plot_md_ensembles(md_records: list[dict[str, Any]], output_path: Path) -> None:
-    labels, drift, drift_error, contacts, contact_error = [], [], [], [], []
-    for record in md_records:
-        artifact = Path(record.get("artifact_path", ""))
-        if not artifact.is_file():
-            continue
-        try:
-            payload = json.loads(artifact.read_text())
-        except (json.JSONDecodeError, OSError):
-            continue
-        axes = payload.get("ensemble_axes", {})
-        disagreement = payload.get("replica_disagreement", {})
-        if "substrate_centroid_drift_a" not in axes or "contact_fraction" not in axes:
-            continue
-        labels.append(record.get("system_label") or record.get("candidate_id") or "reference")
-        drift.append(axes["substrate_centroid_drift_a"]["replica_mean"])
-        drift_error.append(disagreement["substrate_centroid_drift_a"]["standard_deviation"])
-        contacts.append(axes["contact_fraction"]["replica_mean"])
-        contact_error.append(disagreement["contact_fraction"]["standard_deviation"])
-    figure, (left, right) = plt.subplots(1, 2, figsize=(13, 5))
-    if labels:
-        x = np.arange(len(labels))
-        left.errorbar(x, drift, yerr=drift_error, fmt="o", capsize=3)
-        right.errorbar(x, contacts, yerr=contact_error, fmt="o", capsize=3)
-        for axis in (left, right):
-            axis.set_xticks(x, labels, rotation=45, ha="right", fontsize=7)
-        left.set_ylabel("Substrate centroid drift (Å)")
-        right.set_ylabel("Contact fraction")
-    else:
-        for axis in (left, right):
-            axis.text(0.5, 0.5, "No valid production ensemble axes available", ha="center", va="center")
-            axis.set_axis_off()
-    left.set_title("Replicated substrate drift")
-    right.set_title("Replicated Aβ contact occupancy")
-    figure.suptitle("Explicit-solvent MD ensemble comparison")
     figure.tight_layout()
     output_path.parent.mkdir(parents=True, exist_ok=True)
     figure.savefig(output_path, dpi=180)
@@ -378,9 +341,11 @@ def _dossier(
     design_by_position: dict[int, ResidueDesignRecord],
     review: dict[str, Any],
     structure_record: dict[str, Any] | None,
-    md_record: dict[str, Any] | None,
 ) -> str:
     context_lines = []
+    liability_lines: list[str] = []
+    hydrophobic = set("AILMVFYW")
+    charged = set("DEKRH")
     for mutation in candidate.mutations:
         record = design_by_position[mutation.position]
         context_lines.append(
@@ -388,6 +353,47 @@ def _dossier(
             f"{record.min_substrate_distance_a:.3f} Å from resolved Aβ; "
             f"{record.min_zinc_distance_a:.3f} Å from Zn; {record.burial_class}."
         )
+        if mutation.mutant == "C":
+            liability_lines.append(f"{mutation.label}: cysteine introduction")
+        if mutation.mutant == "P":
+            liability_lines.append(f"{mutation.label}: proline introduction")
+        if mutation.mutant == "G" and record.secondary_structure in {"helix", "strand"}:
+            liability_lines.append(
+                f"{mutation.label}: glycine at a secondary-structure-sensitive site"
+            )
+        if record.relative_sasa >= 0.5 and mutation.mutant in hydrophobic:
+            liability_lines.append(f"{mutation.label}: exposed hydrophobic substitution")
+        if (
+            record.burial_class == "buried"
+            and mutation.mutant in charged
+            and mutation.wildtype not in charged
+        ):
+            liability_lines.append(f"{mutation.label}: buried charge introduction")
+        if (mutation.wildtype in charged) != (mutation.mutant in charged):
+            liability_lines.append(f"{mutation.label}: substantial charge-class change")
+    latest = {
+        record.axis: record
+        for record in evidence
+        if record.status is EvidenceStatus.AVAILABLE and record.value is not None
+    }
+    stability_policy = latest.get(EvidenceAxis.STABILITY_MODEL_AWARE)
+    if stability_policy is not None and float(stability_policy.value) >= 0.75:
+        liability_lines.append("within-model predicted stability regression")
+    if candidate.metal_liability != "none_identified":
+        liability_lines.append(candidate.metal_liability)
+    structural_failures = (
+        [] if structure_record is None else structure_record.get("hard_violations", [])
+    )
+    if structural_failures:
+        liability_lines.extend(
+            f"structural hard warning: {item.get('code', 'unknown')}"
+            for item in structural_failures
+        )
+    liability_text = (
+        "\n".join(f"- {item}" for item in sorted(set(liability_lines)))
+        if liability_lines
+        else "- No listed sequence/structure liability heuristic was triggered."
+    )
     lineage = _lineage(candidate, ledger)
     lineage_text = " → ".join(
         f"{item.candidate_id} ({item.mutation_set})" for item in lineage
@@ -418,11 +424,6 @@ def _dossier(
         if not activity
         else "; ".join(f"{item.status.value}: {item.method}" for item in activity)
     )
-    md_text = (
-        "Not evaluated."
-        if md_record is None
-        else f"{md_record.get('completed_replicas', 0)} completed replicas; artifact: `{md_record.get('artifact_path')}`."
-    )
     structure_text = (
         "No exported mutant structure."
         if structure_record is None
@@ -452,23 +453,35 @@ Intended upside: {candidate.intended_upside}
 
 Expected risk: {candidate.expected_risk}
 
+Intended physical change: {candidate.intended_physical_change}
+
+Feature intended to remain preserved: {candidate.feature_to_preserve}
+
+Principal biochemical risk: {candidate.principal_biochemical_risk}
+
+Metal-liability status: `{candidate.metal_liability}`; candidate-specific geometry required: `{candidate.requires_candidate_geometry}`.
+
+Double category: `{candidate.double_category or 'not_applicable'}`; physical coupling: {candidate.physical_coupling or 'not applicable'}; epistasis uncertainty: `{candidate.epistasis_uncertainty or 'not_applicable'}`.
+
+Known-experiment conflict: `{candidate.known_experiment_conflict}`.
+
 ## Structural context
 
 {chr(10).join(context_lines)}
 
 {structure_text}
 
+## Liability/developability heuristics
+
+{liability_text}
+
+These are policy heuristics, not experimentally validated developability predictions.
+
 ## Independent computational evidence
 
 {_evidence_markdown(evidence)}
 
-ThermoMPNN/ThermoMPNN-D values are stability evidence only. `catalytic_preorganization` values describe preservation/deviation of an experimentally grounded arrangement, not catalytic-rate prediction.
-
-## Replicated MD evidence
-
-{md_text}
-
-These trajectories are structural/dynamic simulations with explicit Zn restraints. They do not simulate chemical turnover, establish convergence, or predict `kcat/Km`.
+ThermoMPNN/ThermoMPNN-D raw values are stability evidence only and are not cross-model commensurate. Model-aware empirical ranks are screening policy values, not biological calibration. `catalytic_preorganization` values describe preservation/deviation of an experimentally grounded arrangement, not catalytic-rate prediction.
 
 ## Activity-oriented evidence
 
@@ -531,7 +544,6 @@ def build_adaptive_outputs(
     near_misses: list[dict[str, Any]],
     funnel_counts: dict[str, int],
     structure_records: list[dict[str, Any]],
-    md_records: list[dict[str, Any]],
     adversarial_reviews: list[dict[str, Any]],
     reference_pdb: Path,
     seed: int,
@@ -552,9 +564,6 @@ def build_adaptive_outputs(
         for record in structure_records
         if record.get("candidate_id")
     }
-    md_by_id = {
-        record["candidate_id"]: record for record in md_records if record.get("candidate_id")
-    }
     review_by_id = {record["candidate_id"]: record for record in adversarial_reviews}
 
     candidate_table = run_dir / "candidates.csv"
@@ -569,6 +578,27 @@ def build_adaptive_outputs(
         for candidate in finalists
     )
     _write_text(fasta_path, fasta_content)
+    individual_fastas = []
+    for candidate in finalists:
+        path = exports / "fastas" / f"{candidate.candidate_id}.fasta"
+        _write_text(
+            path,
+            f">{candidate.candidate_id}|{candidate.mutation_set}|EXPERIMENTALLY_UNTESTED\n"
+            f"{_wrap_fasta(candidate.sequence)}\n",
+        )
+        individual_fastas.append(path)
+    finalist_evidence = [
+        record.to_dict()
+        for record in evidence
+        if record.candidate_id in set(finalist_ids)
+    ]
+    finalist_evidence_csv = exports / "finalist_evidence.csv"
+    pd.DataFrame(finalist_evidence).to_csv(finalist_evidence_csv, index=False)
+    finalist_evidence_json = exports / "finalist_evidence.json"
+    _write_text(
+        finalist_evidence_json,
+        json.dumps(finalist_evidence, indent=2, sort_keys=True) + "\n",
+    )
     structure_exports = []
     dossiers = []
     render_paths = []
@@ -593,7 +623,6 @@ def build_adaptive_outputs(
                 design_by_position,
                 review_by_id.get(candidate.candidate_id, {}),
                 source_record,
-                md_by_id.get(candidate.candidate_id),
             ),
         )
         dossiers.append(dossier)
@@ -604,14 +633,12 @@ def build_adaptive_outputs(
         figures_dir / "failure_memory.png",
         figures_dir / "structural_design_map.png",
         figures_dir / "finalist_independent_axes.png",
-        figures_dir / "md_ensemble_comparison.png",
     ]
     _plot_funnel(funnel_counts, figures[0])
     _plot_search_landscape(candidates, figures[1])
     _plot_failure_memory(ledger, figures[2])
     _plot_structural_map(reference_pdb, design_space, finalists, figures[3])
     _plot_finalist_axes(finalists, evidence_by_candidate, figures[4])
-    _plot_md_ensembles(md_records, figures[5])
 
     repair_children = [
         candidate for candidate in candidates if candidate.revision_generation > 0
@@ -694,7 +721,7 @@ The Y91F/D126A retrospective result remains `BENCHMARK_FAILED`. It showed that t
 
 ## Actual search funnel
 
-`{funnel_counts.get('generated_evaluated', 0):,} → {funnel_counts.get('broad_survivors', 0):,} → {funnel_counts.get('structural_analyses', 0):,} → {funnel_counts.get('md_candidates', 0):,} → {funnel_counts.get('adversarial_review', 0):,} → {funnel_counts.get('finalists', 0):,}`
+`{funnel_counts.get('generated_evaluated', 0):,} → {funnel_counts.get('broad_survivors', 0):,} → {funnel_counts.get('structural_analyses', 0):,} → {funnel_counts.get('adversarial_review', 0):,} → {funnel_counts.get('finalists', 0):,}`
 
 ## Learning and revision
 
@@ -713,15 +740,15 @@ Round 2 consumed Round-1 position priorities and confidence-scoped failure memor
 
 No audited activity-oriented model was admitted. ProMEP, EnzyACT, CatPred, UniKP, and PLACER lacked the combined validated target/domain/metal/multichain support required for DP622/Aβ prospective activity inference. Missing activity evidence was never converted to favorable evidence.
 
-## Molecular-dynamics interpretation
+## Replicated explicit-solvent MD methodological exclusion
 
-The production tier uses three independent explicit-solvent replicas per system, documented equilibration, unrestrained production sampling, checkpointed trajectories, and explicit Zn contact restraints. Ensemble values describe structural persistence, substrate drift, contacts, active-site RMSD/RMSF, and replica disagreement. They do not simulate bond cleavage, establish reaction barriers, or predict `kcat/Km`.
+Replicated explicit-solvent MD was evaluated as a prospective evidence layer but excluded from Atlas candidate discrimination after the DP622/Aβ/Zn reference failed reproducible numerical and catalytic/substrate-geometry validation. Missing dynamics evidence never penalizes a candidate and dynamics is not a finalist evidence axis.
 
 ## Limitations
 
 - All finalists are **EXPERIMENTALLY UNTESTED**.
 - ThermoMPNN/ThermoMPNN-D provide stability-oriented evidence, not catalytic-activity predictions.
-- Restrained structures and finite MD trajectories are model-dependent and are not proof of convergence.
+- Restrained candidate-specific structures are model-dependent and are not catalytic-activity predictions.
 - The 23WN-derived active-like construct is inferred; it is not an exact recovered DP622-S2 assay sequence.
 - No claim is made about therapeutic efficacy or plaque dissolution.
 
@@ -729,6 +756,84 @@ The production tier uses three independent explicit-solvent replicas per system,
 
 Expression/solubility, folding/thermal stability, cleavage-site-resolved Aβ assays, matched kinetic measurements, specificity profiling, and Zn-dependence controls are required before any activity conclusion.
 """,
+    )
+
+    finalists_index = run_dir / "FINALISTS.md"
+    _write_text(
+        finalists_index,
+        "# Atlas experimentally untested finalist hypotheses\n\n"
+        + finalist_lines
+        + "\n\nThese are wet-lab hypotheses, not demonstrated activity improvements.\n",
+    )
+    limitations_report = reports / "limitations_report.md"
+    _write_text(
+        limitations_report,
+        """# Atlas scientific limitations
+
+- The 23WN-derived model is `active_like_inferred`, not an experimentally observed exact active DP622-S2 complex.
+- The retrospective activity benchmark did not reproduce every measured trend.
+- ThermoMPNN and ThermoMPNN-D are stability models with distinct raw scales.
+- Restrained mutant-complex geometry and Aβ pose/contact evidence do not establish catalytic activity.
+- Replicated explicit-solvent MD failed reference validation and is excluded from candidate discrimination.
+- Every finalist is experimentally untested; wet-lab assays determine actual activity.
+""",
+    )
+    run_readme = run_dir / "README.md"
+    _write_text(
+        run_readme,
+        """# Atlas adaptive production run
+
+Workflow: 23WN → active-like DP622/Aβ/Zn reconstruction → biology-aware design space → mechanism-aware proposals → genuine ThermoMPNN/ThermoMPNN-D stability evidence → model-aware Pareto/diversity funnel → candidate-specific mutant complexes → chemistry/catalytic/Aβ structural evidence → bounded repair → adversarial experimental portfolio.
+
+Replicated explicit-solvent MD was tested on the reference and excluded from finalist discrimination. See `replicated_md_methodological_exclusion.json`.
+
+Finalists, if any, are **EXPERIMENTALLY UNTESTED BEST-SUPPORTED WET-LAB HYPOTHESES**. See `FINALISTS.md`, `reports/atlas_final_design_report.md`, and `reproducibility_manifest.json`.
+""",
+    )
+    _write_text(
+        reports / "strategy_region_coverage.json",
+        json.dumps(
+            {
+                "strategy_counts": dict(sorted(strategy_counts.items())),
+                "region_counts": dict(sorted(region_counts.items())),
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+    )
+    _write_text(
+        reports / "double_category_summary.json",
+        json.dumps(
+            dict(
+                sorted(
+                    Counter(
+                        candidate.double_category
+                        for candidate in candidates
+                        if candidate.double_category is not None
+                    ).items()
+                )
+            ),
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+    )
+    final_selection_trace = reports / "final_selection_trace.json"
+    _write_text(
+        final_selection_trace,
+        json.dumps(
+            {
+                "finalist_ids": list(finalist_ids),
+                "portfolio_target": min(5, len(finalist_ids)),
+                "universal_score": False,
+                "experimentally_untested": True,
+                "adversarial_reviews": adversarial_reviews,
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
     )
 
     package_versions = {}
@@ -743,19 +848,42 @@ Expression/solubility, folding/thermal stability, cleavage-site-resolved Aβ ass
         evidence_table,
         final_report,
         fasta_path,
+        *individual_fastas,
+        finalist_evidence_csv,
+        finalist_evidence_json,
+        finalists_index,
+        limitations_report,
+        run_readme,
+        final_selection_trace,
         *dossiers,
         *structure_exports,
         *figures,
         *render_paths,
     ]
+    run_context = (
+        json.loads((run_dir / "run_context.json").read_text())
+        if (run_dir / "run_context.json").is_file()
+        else {}
+    )
+    adaptive_context = (
+        json.loads((run_dir / "adaptive_run_context.json").read_text())
+        if (run_dir / "adaptive_run_context.json").is_file()
+        else {}
+    )
     manifest = {
         "atlas_sha": _git_sha(run_dir),
+        "thermompnn_sha": run_context.get("thermompnn_commit", "unknown"),
+        "thermompnn_d_sha": run_context.get("thermompnn_d_commit", "unknown"),
+        "input_23wn_sha256": run_context.get("input_sha256", "unknown"),
         "python": sys.version,
         "platform": platform.platform(),
         "package_versions": package_versions,
         "candidate_library_sha256": _sha256(candidate_table),
         "input_structure_sha256": _sha256(reference_pdb),
         "random_seed": seed,
+        "generation_policy_version": adaptive_context.get(
+            "generation_policy_version", "unknown"
+        ),
         "model_label": "active_like_inferred",
         "finalist_ids": list(finalist_ids),
         "funnel_counts": funnel_counts,

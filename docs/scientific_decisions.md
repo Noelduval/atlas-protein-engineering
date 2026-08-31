@@ -1,5 +1,9 @@
 # Scientific decisions
 
+## Replicated dynamics exclusion
+
+Atlas v1 evaluated replicated explicit-solvent MD as a prospective evidence layer. The canonical DP622/Aβ/Zn reference did not pass reproducible numerical and catalytic/substrate-geometry validation, so replicated MD is excluded from mandatory or optional finalist discrimination. No replacement dynamics layer was introduced.
+
 ## Claim boundary
 
 Atlas is a computational prioritization workflow. Four evidence classes remain

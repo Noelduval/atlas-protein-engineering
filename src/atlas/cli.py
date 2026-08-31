@@ -200,9 +200,6 @@ def adaptive_run(
     structure_target: Annotated[
         int, typer.Option(help="Maximum mutant-complex analyses.")
     ] = 100,
-    md_target: Annotated[
-        int, typer.Option(help="Maximum replicated explicit-solvent MD candidates.")
-    ] = 20,
     adversarial_target: Annotated[
         int, typer.Option(help="Maximum blinded adversarial reviews.")
     ] = 10,
@@ -218,7 +215,7 @@ def adaptive_run(
         typer.Option(
             help=(
                 "Stop after setup, round1, round2, round3, broad, structure, repair, "
-                "md, adversarial, or reports."
+                "adversarial, or reports."
             )
         ),
     ] = None,
@@ -236,7 +233,6 @@ def adaptive_run(
                 candidate_budget=candidate_budget,
                 broad_target=broad_target,
                 structure_target=structure_target,
-                md_target=md_target,
                 adversarial_target=adversarial_target,
                 portfolio_target=portfolio_target,
                 seed=seed,

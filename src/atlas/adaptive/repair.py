@@ -98,6 +98,19 @@ class RepairGenerator:
             hypothesis=hypothesis,
             intended_upside=f"Repair {weakness.lower()}",
             expected_risk="The repair may erase the useful parent feature or add epistasis.",
+            intended_physical_change=change,
+            feature_to_preserve=critique.feature_to_preserve,
+            principal_biochemical_risk=(
+                "Repair may erase the useful parent feature or introduce epistasis."
+            ),
+            double_category=(
+                parent.double_category if len(mutations) == 2 else None
+            ),
+            physical_coupling=parent.physical_coupling,
+            epistasis_uncertainty=("high" if len(mutations) == 2 else None),
+            substitution_classes=tuple(
+                [*parent.substitution_classes, "bounded_repair"][-len(mutations):]
+            ),
             revision_generation=parent.revision_generation + 1,
         )
         return RepairProposal(
@@ -185,4 +198,3 @@ class RepairGenerator:
                 if len(proposals) == self.max_children:
                     return proposals
         return proposals
-

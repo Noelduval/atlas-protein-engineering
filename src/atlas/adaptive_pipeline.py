@@ -34,14 +34,19 @@ from atlas.design.design_space import (
     classify_design_space,
     write_design_space,
 )
-from atlas.dynamics.models import DynamicsConfig, ExplicitMDConfig
+from atlas.dynamics.models import DynamicsConfig
 from atlas.run_context import prepare_run_directory
 from atlas.structure.reconstruct import reconstruct_active_like
 
 
-PIPELINE_PROTOCOL = "atlas-adaptive-prospective-design-v1"
-DEFAULT_OBJECTIVES = (
-    Objective(EvidenceAxis.STABILITY, Direction.MINIMIZE),
+PIPELINE_PROTOCOL = "atlas-adaptive-prospective-design-v2-md-excluded"
+GENERATION_POLICY_VERSION = "atlas-mechanism-aware-substitution-policy-v1"
+EARLY_OBJECTIVES = (
+    Objective(EvidenceAxis.STABILITY_MODEL_AWARE, Direction.MINIMIZE),
+    Objective(EvidenceAxis.LIABILITY, Direction.MINIMIZE),
+)
+STRUCTURAL_OBJECTIVES = (
+    Objective(EvidenceAxis.STABILITY_MODEL_AWARE, Direction.MINIMIZE),
     Objective(EvidenceAxis.SUBSTRATE_INTERFACE, Direction.MAXIMIZE),
     Objective(EvidenceAxis.CATALYTIC_GEOMETRY, Direction.MINIMIZE),
     Objective(EvidenceAxis.LIABILITY, Direction.MINIMIZE),
@@ -55,15 +60,6 @@ class CandidateStructureResult:
     evidence: tuple[EvidenceRecord, ...]
     hard_violations: tuple[HardViolation, ...]
     artifact_path: Path
-
-
-@dataclass(frozen=True)
-class CandidateDynamicsResult:
-    candidate_id: str | None
-    evidence: tuple[EvidenceRecord, ...]
-    hard_violations: tuple[HardViolation, ...]
-    artifact_path: Path
-    completed_replicas: int
 
 
 class AdaptiveScientificBackend(Protocol):
@@ -83,16 +79,6 @@ class AdaptiveScientificBackend(Protocol):
         seed: int,
     ) -> CandidateStructureResult: ...
 
-    def evaluate_dynamics(
-        self,
-        pdb_path: Path,
-        candidate: CandidateRecord | None,
-        output_dir: Path,
-        *,
-        system_label: str,
-    ) -> CandidateDynamicsResult: ...
-
-
 @dataclass(frozen=True)
 class AdaptivePipelineConfig:
     input_structure: Path = Path("data/23WN.cif")
@@ -101,20 +87,20 @@ class AdaptivePipelineConfig:
     run_id: str | None = None
     thermompnn_repo: Path = Path(".external/ThermoMPNN")
     thermompnn_d_repo: Path = Path(".external/ThermoMPNN-D")
-    dynamics_mode: str = "explicit-replicated"
+    dynamics_mode: str = field(
+        default="excluded-reference-validation-failed", init=False
+    )
     candidate_budget: int = 5_000
     round1_target: int = 1_200
     minimum_doubles: int = 750
     broad_target: int = 500
     structure_target: int = 100
-    md_target: int = 20
     adversarial_target: int = 10
     portfolio_target: int = 5
     repair_parent_target: int = 6
     minimum_structural_regions: int = 4
     seed: int = 622
     relaxation_config: DynamicsConfig = field(default_factory=DynamicsConfig)
-    explicit_md_config: ExplicitMDConfig = field(default_factory=ExplicitMDConfig)
     resume: bool = False
     stop_after: str | None = None
 
@@ -124,7 +110,6 @@ class AdaptivePipelineConfig:
         targets = (
             self.broad_target,
             self.structure_target,
-            self.md_target,
             self.adversarial_target,
             self.portfolio_target,
         )
@@ -132,7 +117,7 @@ class AdaptivePipelineConfig:
             raise ValueError("Funnel targets must be positive")
         if not (
             self.candidate_budget >= self.broad_target >= self.structure_target
-            >= self.md_target >= self.adversarial_target >= self.portfolio_target
+            >= self.adversarial_target >= self.portfolio_target
         ):
             raise ValueError("Funnel targets must be monotonically non-increasing")
         allowed = {
@@ -144,7 +129,6 @@ class AdaptivePipelineConfig:
             "broad",
             "structure",
             "repair",
-            "md",
             "adversarial",
             "reports",
         }
@@ -187,7 +171,6 @@ def _adaptive_context(config: AdaptivePipelineConfig, run_dir: Path) -> dict[str
         "funnel_targets": {
             "broad": config.broad_target,
             "structure": config.structure_target,
-            "md": config.md_target,
             "adversarial": config.adversarial_target,
             "portfolio": config.portfolio_target,
         },
@@ -196,7 +179,11 @@ def _adaptive_context(config: AdaptivePipelineConfig, run_dir: Path) -> dict[str
         "repair_generation_limit": 2,
         "minimum_structural_regions": config.minimum_structural_regions,
         "seed": config.seed,
-        "explicit_md": asdict(config.explicit_md_config),
+        "generation_policy_version": GENERATION_POLICY_VERSION,
+        "replicated_explicit_md": {
+            "included_in_candidate_discrimination": False,
+            "reason": "DP622/Aβ/Zn reference failed reproducible numerical and geometry validation.",
+        },
         "claim_boundary": (
             "Prospective computational experiment prioritization; not proof of improved "
             "catalytic activity or therapeutic efficacy."
@@ -254,7 +241,11 @@ def _incomplete_audit(config: AdaptivePipelineConfig, evaluated: int) -> Complet
         unique_legal_evaluated=evaluated,
         candidate_budget=config.candidate_budget,
         strategies_used=frozenset(),
-        required_strategies=frozenset(strategy.value for strategy in DesignStrategy),
+        required_strategies=frozenset(
+            strategy.value
+            for strategy in DesignStrategy
+            if strategy is not DesignStrategy.REPAIR_RESCUE
+        ),
         structural_regions_explored=frozenset(),
         minimum_structural_regions=config.minimum_structural_regions,
         pending_candidates=max(1, config.candidate_budget - evaluated),
@@ -381,12 +372,70 @@ def _group_evidence(
     return {candidate_id: tuple(values) for candidate_id, values in grouped.items()}
 
 
+def _model_aware_stability_evidence(
+    records: Iterable[EvidenceRecord],
+) -> tuple[EvidenceRecord, ...]:
+    """Create within-model empirical ranks without mixing upstream raw scales."""
+    groups: dict[tuple[str, str], list[EvidenceRecord]] = defaultdict(list)
+    for record in records:
+        if (
+            record.axis is not EvidenceAxis.STABILITY
+            or record.status is not EvidenceStatus.AVAILABLE
+            or record.value is None
+        ):
+            continue
+        method = record.method.lower()
+        if "thermompnn" not in method and "stability" not in method:
+            continue
+        model_commit = str(record.provenance.get("model_commit", "unspecified"))
+        groups[(record.method, model_commit)].append(record)
+
+    normalized: list[EvidenceRecord] = []
+    for (method, model_commit), group in sorted(groups.items()):
+        ordered = sorted(float(record.value) for record in group)
+        denominator = len(ordered) - 1
+        for record in group:
+            raw = float(record.value)
+            if denominator == 0:
+                percentile = 0.5
+                uncertainty = 0.5
+            else:
+                matching = [index for index, value in enumerate(ordered) if value == raw]
+                percentile = (sum(matching) / len(matching)) / denominator
+                uncertainty = min(0.25, 1.0 / (len(ordered) ** 0.5))
+            normalized.append(
+                EvidenceRecord.numeric(
+                    record.candidate_id,
+                    EvidenceAxis.STABILITY_MODEL_AWARE,
+                    value=percentile,
+                    uncertainty=uncertainty,
+                    method=f"within-model empirical rank: {method}",
+                    provenance={
+                        "model_commit": model_commit,
+                        "source_method": method,
+                        "normalization": "within-model empirical percentile",
+                        "engineering_policy": True,
+                    },
+                    payload={
+                        "raw_value": raw,
+                        "raw_axis": EvidenceAxis.STABILITY.value,
+                        "raw_scale_not_cross_model_comparable": True,
+                        "direction": "lower within-model percentile",
+                    },
+                )
+            )
+    return tuple(normalized)
+
+
 def _evaluations(
     candidates: Iterable[CandidateRecord],
     evidence: Iterable[EvidenceRecord],
     violations: Mapping[str, tuple[HardViolation, ...]] | None = None,
 ) -> tuple[Evaluation, ...]:
-    grouped = _group_evidence(evidence)
+    evidence_tuple = tuple(evidence)
+    grouped = _group_evidence(
+        evidence_tuple + _model_aware_stability_evidence(evidence_tuple)
+    )
     hard = {} if violations is None else violations
     return tuple(
         Evaluation(
@@ -399,10 +448,11 @@ def _evaluations(
 
 
 def _latest_stability(records: Iterable[EvidenceRecord]) -> dict[str, float]:
+    record_tuple = tuple(records)
     values: dict[str, float] = {}
-    for record in records:
+    for record in record_tuple + _model_aware_stability_evidence(record_tuple):
         if (
-            record.axis is EvidenceAxis.STABILITY
+            record.axis is EvidenceAxis.STABILITY_MODEL_AWARE
             and record.status is EvidenceStatus.AVAILABLE
             and record.value is not None
         ):
@@ -421,7 +471,7 @@ def _learn_failure_patterns(
     patterns: Counter[tuple[str, str]] = Counter()
     exact: Counter[str] = Counter()
     for candidate in candidates:
-        if stability.get(candidate.candidate_id, float("-inf")) < 1.0:
+        if stability.get(candidate.candidate_id, float("-inf")) < 0.75:
             continue
         for mutation in candidate.mutations:
             patterns[(candidate.structural_region, mutation.mutant)] += 1
@@ -437,7 +487,7 @@ def _learn_failure_patterns(
                 scope=f"substitution:{region}:{mutant}",
                 detail=(
                     f"Round {round_index}: {count} candidates introducing {mutant} in "
-                    f"{region} had stability evidence >= 1.0 kcal/mol."
+                    f"{region} fell in the within-model regressive quartile."
                 ),
                 evidence_count=count,
                 confidence=min(0.95, 0.55 + 0.03 * count),
@@ -564,7 +614,47 @@ def _evidence_delta(parent: Evaluation, child: Evaluation) -> dict[str, float]:
     }
 
 
-def _adversarial_review(evaluation: Evaluation, critique: Critique) -> dict[str, Any]:
+def _parent_child_structural_evidence(
+    evaluation: Evaluation,
+    ledger: ScientificLedger,
+) -> list[dict[str, Any]]:
+    if len(evaluation.candidate.mutations) != 2:
+        return []
+    child_axes = evaluation.latest_by_axis()
+    records = ledger.all_evidence()
+    comparisons: list[dict[str, Any]] = []
+    for parent_id in evaluation.candidate.parents:
+        parent = ledger.get_candidate(parent_id)
+        if parent is None:
+            continue
+        parent_axes = _evaluations((parent,), records)[0].latest_by_axis()
+        deltas = {}
+        for axis in (
+            EvidenceAxis.STRUCTURE_QUALITY,
+            EvidenceAxis.CATALYTIC_GEOMETRY,
+            EvidenceAxis.SUBSTRATE_INTERFACE,
+        ):
+            if axis in child_axes and axis in parent_axes:
+                deltas[axis.value] = (
+                    float(child_axes[axis].value) - float(parent_axes[axis].value)
+                )
+        comparisons.append(
+            {
+                "parent_id": parent_id,
+                "parent_mutation_set": parent.mutation_set,
+                "structural_axis_deltas_child_minus_parent": deltas,
+                "raw_stability_arithmetic_performed": False,
+            }
+        )
+    return comparisons
+
+
+def _adversarial_review(
+    evaluation: Evaluation,
+    critique: Critique,
+    *,
+    parent_child_structural_evidence: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
     by_axis = evaluation.latest_by_axis()
     available = {
         axis.value: {
@@ -582,6 +672,15 @@ def _adversarial_review(evaluation: Evaluation, critique: Critique) -> dict[str,
     return {
         "candidate_id": evaluation.candidate.candidate_id,
         "mutation_set": evaluation.candidate.mutation_set,
+        "double_category": evaluation.candidate.double_category,
+        "physical_coupling": evaluation.candidate.physical_coupling,
+        "epistasis_uncertainty": evaluation.candidate.epistasis_uncertainty,
+        "known_experiment_conflict": evaluation.candidate.known_experiment_conflict,
+        "parent_child_structural_evidence": (
+            []
+            if parent_child_structural_evidence is None
+            else parent_child_structural_evidence
+        ),
         "blind_rank_order": True,
         "decision": critique.route.value,
         "promotion_blocker": critique.diagnosed_weakness,
@@ -614,7 +713,7 @@ def _portfolio(
         return ()
     initial = select_diverse_survivors(
         evaluations,
-        DEFAULT_OBJECTIVES,
+        STRUCTURAL_OBJECTIVES,
         target=min(target, len(evaluations)),
     )
     selected: list[Evaluation] = []
@@ -665,7 +764,6 @@ def run_adaptive_pipeline(
             thermompnn_repo=config.thermompnn_repo,
             thermompnn_d_repo=config.thermompnn_d_repo,
             relaxation_config=config.relaxation_config,
-            explicit_md_config=config.explicit_md_config,
             seed=config.seed,
         )
 
@@ -676,6 +774,22 @@ def run_adaptive_pipeline(
         design_json = run_dir / "design_space.json"
         design_csv = run_dir / "design_space.csv"
         setup_artifact = run_dir / "setup_complete.json"
+        md_exclusion_path = run_dir / "replicated_md_methodological_exclusion.json"
+        if not md_exclusion_path.is_file():
+            _write_json(
+                md_exclusion_path,
+                {
+                    "reference_validation": "FAILED",
+                    "included_in_candidate_discrimination": False,
+                    "candidate_penalty_when_missing": False,
+                    "statement": (
+                        "Replicated explicit-solvent MD was evaluated as a prospective "
+                        "evidence layer but excluded from Atlas candidate discrimination "
+                        "after the DP622/Aβ/Zn reference failed reproducible numerical and "
+                        "catalytic/substrate-geometry validation."
+                    ),
+                },
+            )
         if ledger.stage_completed(run_id, "setup", context_hash):
             design_space = _records_from_json(design_json)
             if not reconstructed.is_file():
@@ -762,7 +876,7 @@ def run_adaptive_pipeline(
             round1_evaluations = _evaluations(round1, ledger.all_evidence())
             priority_evaluations = select_diverse_survivors(
                 round1_evaluations,
-                DEFAULT_OBJECTIVES,
+                EARLY_OBJECTIVES,
                 target=min(250, len(round1)),
             )
             position_priority = tuple(
@@ -818,7 +932,7 @@ def run_adaptive_pipeline(
             single_evaluations = _evaluations(singles, ledger.all_evidence())
             preferred = select_diverse_survivors(
                 single_evaluations,
-                DEFAULT_OBJECTIVES,
+                EARLY_OBJECTIVES,
                 target=min(500, len(singles)),
             )
             memory_before = ledger.failures()
@@ -855,6 +969,62 @@ def run_adaptive_pipeline(
             raise RuntimeError(
                 f"Adaptive rounds evaluated {len(seed_candidates)}/{config.candidate_budget}"
             )
+        generation_summary_path = search_dir / "candidate_generation_summary.json"
+        if not generation_summary_path.is_file():
+            _write_json(
+                generation_summary_path,
+                {
+                    "policy_version": GENERATION_POLICY_VERSION,
+                    "unique_legal_candidates": len(seed_candidates),
+                    "counts_by_round": dict(
+                        sorted(Counter(str(c.round_index) for c in seed_candidates).items())
+                    ),
+                    "counts_by_strategy": dict(
+                        sorted(Counter(c.strategy.value for c in seed_candidates).items())
+                    ),
+                    "counts_by_region": dict(
+                        sorted(Counter(c.structural_region for c in seed_candidates).items())
+                    ),
+                    "counts_by_substitution_class": dict(
+                        sorted(
+                            Counter(
+                                policy_class
+                                for candidate in seed_candidates
+                                for policy_class in candidate.substitution_classes
+                            ).items()
+                        )
+                    ),
+                    "counts_by_double_category": dict(
+                        sorted(
+                            Counter(
+                                candidate.double_category
+                                for candidate in seed_candidates
+                                if candidate.double_category is not None
+                            ).items()
+                        )
+                    ),
+                    "known_retrospective_construct_excluded": "Y91F/D126A",
+                },
+            )
+        normalized_seed_path = search_dir / "model_aware_stability_evidence.json"
+        if not ledger.stage_completed(
+            run_id, "model_aware_stability_seed", context_hash
+        ):
+            normalized_seed = _model_aware_stability_evidence(
+                ledger.all_evidence()
+            )
+            ledger.add_evidence_many(normalized_seed)
+            _write_json(
+                normalized_seed_path,
+                [record.to_dict() for record in normalized_seed],
+            )
+            _mark_stage(
+                ledger,
+                run_id=run_id,
+                stage="model_aware_stability_seed",
+                context_hash=context_hash,
+                artifact=normalized_seed_path,
+            )
         broad_path = search_dir / "broad_survivor_ids.json"
         if ledger.stage_completed(run_id, "broad", context_hash):
             broad = _load_candidates(broad_path, ledger)
@@ -862,7 +1032,7 @@ def run_adaptive_pipeline(
             evaluations = _evaluations(seed_candidates, ledger.all_evidence())
             broad_eval = select_diverse_survivors(
                 evaluations,
-                DEFAULT_OBJECTIVES,
+                EARLY_OBJECTIVES,
                 target=min(config.broad_target, len(evaluations)),
             )
             broad = tuple(evaluation.candidate for evaluation in broad_eval)
@@ -896,10 +1066,23 @@ def run_adaptive_pipeline(
             broad_eval = _evaluations(broad, ledger.all_evidence())
             selected = select_diverse_survivors(
                 broad_eval,
-                DEFAULT_OBJECTIVES,
+                EARLY_OBJECTIVES,
                 target=min(config.structure_target, len(broad_eval)),
             )
-            structure_candidates = tuple(item.candidate for item in selected)
+            selected_candidates = [item.candidate for item in selected]
+            selected_ids = {
+                candidate.candidate_id for candidate in selected_candidates
+            }
+            for candidate in tuple(selected_candidates):
+                if len(candidate.mutations) != 2:
+                    continue
+                for parent_id in candidate.parents:
+                    parent = ledger.get_candidate(parent_id)
+                    if parent is None or parent_id in selected_ids:
+                        continue
+                    selected_candidates.append(parent)
+                    selected_ids.add(parent_id)
+            structure_candidates = tuple(selected_candidates)
             structure_records: list[dict[str, Any]] = []
             evidence_batch: list[EvidenceRecord] = []
             for index, candidate in enumerate(structure_candidates):
@@ -961,7 +1144,7 @@ def run_adaptive_pipeline(
             )
             repairable_evaluations = select_diverse_survivors(
                 revisable,
-                DEFAULT_OBJECTIVES,
+                STRUCTURAL_OBJECTIVES,
                 target=min(config.repair_parent_target, len(revisable)),
             )
             repairable = [
@@ -1097,110 +1280,6 @@ def run_adaptive_pipeline(
         all_structure_records = tuple(structure_records) + tuple(repair_records)
         all_structure_candidates = structure_candidates + repair_children
         all_violations = _violation_map(all_structure_records)
-        md_path = run_dir / "md" / "md_results.json"
-        md_ids_path = search_dir / "md_candidate_ids.json"
-        if ledger.stage_completed(run_id, "md", context_hash):
-            md_candidates = _load_candidates(md_ids_path, ledger)
-            md_records = tuple(json.loads(md_path.read_text()))
-        else:
-            policy = CriticPolicy()
-            structure_evaluations = _evaluations(
-                all_structure_candidates,
-                ledger.all_evidence(),
-                all_violations,
-            )
-            promotable = tuple(
-                evaluation
-                for evaluation in structure_evaluations
-                if policy.critique(evaluation).route is CriticRoute.PROMOTE
-            )
-            selected = select_diverse_survivors(
-                promotable,
-                DEFAULT_OBJECTIVES,
-                target=min(config.md_target, len(promotable)),
-            )
-            selected_list = list(selected)
-            promoted_repairs = [
-                evaluation
-                for evaluation in promotable
-                if evaluation.candidate.strategy is DesignStrategy.REPAIR_RESCUE
-            ]
-            for repair_eval in reversed(promoted_repairs):
-                selected_list = [
-                    item
-                    for item in selected_list
-                    if item.candidate.candidate_id != repair_eval.candidate.candidate_id
-                ]
-                selected_list.insert(0, repair_eval)
-            md_candidates = tuple(
-                evaluation.candidate for evaluation in selected_list[: config.md_target]
-            )
-            reference_result = backend.evaluate_dynamics(
-                reconstructed,
-                None,
-                run_dir / "md" / "reference_active_like_inferred",
-                system_label="reference_active_like_inferred",
-            )
-            md_records_list: list[dict[str, Any]] = [
-                {
-                    "candidate_id": None,
-                    "system_label": "reference_active_like_inferred",
-                    "artifact_path": str(reference_result.artifact_path),
-                    "completed_replicas": reference_result.completed_replicas,
-                    "hard_violations": [
-                        asdict(violation) for violation in reference_result.hard_violations
-                    ],
-                }
-            ]
-            for candidate in md_candidates:
-                source_record = next(
-                    record
-                    for record in all_structure_records
-                    if record["candidate_id"] == candidate.candidate_id
-                )
-                result = backend.evaluate_dynamics(
-                    Path(source_record["structure_path"]),
-                    candidate,
-                    run_dir / "md" / candidate.candidate_id,
-                    system_label=candidate.candidate_id,
-                )
-                ledger.add_evidence_many(result.evidence)
-                for violation in result.hard_violations:
-                    ledger.record_failure(
-                        FailureObservation(
-                            candidate_id=candidate.candidate_id,
-                            category=violation.code,
-                            scope=f"candidate:{candidate.candidate_id}",
-                            detail=violation.detail,
-                            evidence_count=1,
-                            confidence=1.0,
-                            source="replicated explicit-solvent MD",
-                        )
-                    )
-                md_records_list.append(
-                    {
-                        "candidate_id": candidate.candidate_id,
-                        "system_label": candidate.candidate_id,
-                        "artifact_path": str(result.artifact_path),
-                        "completed_replicas": result.completed_replicas,
-                        "hard_violations": [
-                            asdict(violation) for violation in result.hard_violations
-                        ],
-                    }
-                )
-            md_records = tuple(md_records_list)
-            _write_candidate_ids(md_ids_path, md_candidates)
-            _write_json(md_path, md_records)
-            _mark_stage(
-                ledger,
-                run_id=run_id,
-                stage="md",
-                context_hash=context_hash,
-                artifact=md_path,
-            )
-        stopped = _stop(config, run_dir, ledger, "md")
-        if stopped:
-            return stopped
 
         adversarial_path = run_dir / "reports" / "adversarial_reviews.json"
         adversarial_ids_path = search_dir / "adversarial_candidate_ids.json"
@@ -1209,9 +1288,6 @@ def run_adaptive_pipeline(
         )
         adversarial_repair_structure_path = (
             run_dir / "repair" / "adversarial_repair_structure_results.json"
-        )
-        adversarial_repair_md_path = (
-            run_dir / "repair" / "adversarial_repair_md_results.json"
         )
         if ledger.stage_completed(run_id, "adversarial", context_hash):
             adversarial_candidates = _load_candidates(adversarial_ids_path, ledger)
@@ -1222,31 +1298,23 @@ def run_adaptive_pipeline(
             adversarial_repair_structures = _load_structure_results(
                 adversarial_repair_structure_path
             )
-            adversarial_repair_md = tuple(
-                json.loads(adversarial_repair_md_path.read_text())
-            )
         else:
-            md_candidate_records = {
-                record["candidate_id"]: record
-                for record in md_records
-                if record["candidate_id"] is not None
-            }
-            md_violations = _violation_map(md_candidate_records.values())
-            eligible_md = tuple(
-                candidate
-                for candidate in md_candidates
-                if md_candidate_records[candidate.candidate_id]["completed_replicas"] >= 2
-                and not md_violations.get(candidate.candidate_id)
-            )
-            md_evaluations = _evaluations(
-                eligible_md, ledger.all_evidence(), md_violations
-            )
-            selected = select_diverse_survivors(
-                md_evaluations,
-                DEFAULT_OBJECTIVES,
-                target=min(config.adversarial_target, len(md_evaluations)),
+            structure_evaluations = _evaluations(
+                all_structure_candidates,
+                ledger.all_evidence(),
+                all_violations,
             )
             policy = CriticPolicy()
+            promotable = tuple(
+                evaluation
+                for evaluation in structure_evaluations
+                if policy.critique(evaluation).route is CriticRoute.PROMOTE
+            )
+            selected = select_diverse_survivors(
+                promotable,
+                STRUCTURAL_OBJECTIVES,
+                target=min(config.adversarial_target, len(promotable)),
+            )
             repair_generator = RepairGenerator(
                 design_space,
                 max_children_per_parent_round=3,
@@ -1257,7 +1325,6 @@ def run_adaptive_pipeline(
             adversarial_candidate_list: list[CandidateRecord] = []
             adversarial_repair_children_list: list[CandidateRecord] = []
             adversarial_repair_structure_list: list[dict[str, Any]] = []
-            adversarial_repair_md_list: list[dict[str, Any]] = []
             review_list: list[dict[str, Any]] = []
             repair_index = 0
             for starting_evaluation in selected:
@@ -1344,48 +1411,6 @@ def run_adaptive_pipeline(
                         ledger.all_evidence(),
                         {child.candidate_id: tuple(child_violations)},
                     )[0]
-                    pre_md_critique = policy.critique(evaluation)
-                    if pre_md_critique.route is CriticRoute.PROMOTE:
-                        dynamics_result = backend.evaluate_dynamics(
-                            structure_result.structure_path,
-                            child,
-                            run_dir
-                            / "md"
-                            / "adversarial_repair"
-                            / child.candidate_id,
-                            system_label=child.candidate_id,
-                        )
-                        ledger.add_evidence_many(dynamics_result.evidence)
-                        child_violations.extend(dynamics_result.hard_violations)
-                        for violation in dynamics_result.hard_violations:
-                            ledger.record_failure(
-                                FailureObservation(
-                                    candidate_id=child.candidate_id,
-                                    category=violation.code,
-                                    scope=f"candidate:{child.candidate_id}",
-                                    detail=violation.detail,
-                                    evidence_count=1,
-                                    confidence=1.0,
-                                    source="adversarial repair replicated explicit-solvent MD",
-                                )
-                            )
-                        adversarial_repair_md_list.append(
-                            {
-                                "candidate_id": child.candidate_id,
-                                "system_label": child.candidate_id,
-                                "artifact_path": str(dynamics_result.artifact_path),
-                                "completed_replicas": dynamics_result.completed_replicas,
-                                "hard_violations": [
-                                    asdict(violation)
-                                    for violation in dynamics_result.hard_violations
-                                ],
-                            }
-                        )
-                        evaluation = _evaluations(
-                            (child,),
-                            ledger.all_evidence(),
-                            {child.candidate_id: tuple(child_violations)},
-                        )[0]
 
                     child_critique = policy.critique(evaluation)
                     ledger.record_repair_outcome(
@@ -1398,7 +1423,13 @@ def run_adaptive_pipeline(
                     repair_chain.append(child.candidate_id)
 
                 final_critique = policy.critique(evaluation)
-                review = _adversarial_review(evaluation, final_critique)
+                review = _adversarial_review(
+                    evaluation,
+                    final_critique,
+                    parent_child_structural_evidence=_parent_child_structural_evidence(
+                        evaluation, ledger
+                    ),
+                )
                 review.update(
                     {
                         "starting_candidate_id": starting_evaluation.candidate.candidate_id,
@@ -1418,7 +1449,6 @@ def run_adaptive_pipeline(
             adversarial_repair_structures = tuple(
                 adversarial_repair_structure_list
             )
-            adversarial_repair_md = tuple(adversarial_repair_md_list)
             reviews = tuple(review_list)
             _write_candidate_ids(adversarial_ids_path, adversarial_candidates)
             _write_candidate_ids(
@@ -1428,7 +1458,6 @@ def run_adaptive_pipeline(
                 adversarial_repair_structure_path,
                 adversarial_repair_structures,
             )
-            _write_json(adversarial_repair_md_path, adversarial_repair_md)
             _write_json(adversarial_path, reviews)
             _mark_stage(
                 ledger,
@@ -1444,7 +1473,6 @@ def run_adaptive_pipeline(
         all_structure_records = (
             all_structure_records + adversarial_repair_structures
         )
-        md_records = md_records + adversarial_repair_md
         stopped = _stop(config, run_dir, ledger, "adversarial")
         if stopped:
             return stopped
@@ -1501,6 +1529,25 @@ def run_adaptive_pipeline(
 
         report_dir = run_dir / "reports"
         report_marker = report_dir / "funnel_counts.json"
+        final_normalized_path = report_dir / "model_aware_stability_evidence.json"
+        if not ledger.stage_completed(
+            run_id, "model_aware_stability_final", context_hash
+        ):
+            final_normalized = _model_aware_stability_evidence(
+                ledger.all_evidence()
+            )
+            ledger.add_evidence_many(final_normalized)
+            _write_json(
+                final_normalized_path,
+                [record.to_dict() for record in final_normalized],
+            )
+            _mark_stage(
+                ledger,
+                run_id=run_id,
+                stage="model_aware_stability_final",
+                context_hash=context_hash,
+                artifact=final_normalized_path,
+            )
         if ledger.stage_completed(run_id, "reports", context_hash):
             finalist_ids = tuple(json.loads((report_dir / "finalist_ids.json").read_text()))
             audit_data = json.loads((run_dir / "completion_audit.json").read_text())
@@ -1559,7 +1606,11 @@ def run_adaptive_pipeline(
                     for candidate in structure_candidates[:5]
                 ]
             all_candidates = ledger.candidates()
-            required_strategies = frozenset(strategy.value for strategy in DesignStrategy)
+            required_strategies = frozenset(
+                strategy.value
+                for strategy in DesignStrategy
+                if strategy is not DesignStrategy.REPAIR_RESCUE
+            )
             strategies_used = frozenset(
                 candidate.strategy.value for candidate in all_candidates
             )
@@ -1593,9 +1644,6 @@ def run_adaptive_pipeline(
                 "generated_evaluated": len(seed_candidates) + len(repair_children),
                 "broad_survivors": len(broad),
                 "structural_analyses": len(all_structure_records),
-                "md_candidates": sum(
-                    record.get("candidate_id") is not None for record in md_records
-                ),
                 "adversarial_review": len(adversarial_candidates),
                 "finalists": len(finalist_ids),
                 "langgraph_routes": len(json.loads(orchestration_path.read_text())),
@@ -1612,7 +1660,6 @@ def run_adaptive_pipeline(
                 near_misses=near_misses,
                 funnel_counts=funnel,
                 structure_records=list(all_structure_records),
-                md_records=list(md_records),
                 adversarial_reviews=list(reviews),
                 reference_pdb=reconstructed,
                 seed=config.seed,

@@ -79,13 +79,13 @@ def test_critic_routes_supported_repairable_near_miss_to_revision() -> None:
         candidate,
         (
             _numeric(candidate, EvidenceAxis.SUBSTRATE_INTERFACE, 0.9),
-            _numeric(candidate, EvidenceAxis.STABILITY, 1.8),
+            _numeric(candidate, EvidenceAxis.STABILITY_MODEL_AWARE, 0.9),
         ),
     )
     critique = CriticPolicy().critique(evaluation)
     assert critique.route is CriticRoute.REVISE
     assert critique.supporting_signals
-    assert critique.weakness_axis is EvidenceAxis.STABILITY
+    assert critique.weakness_axis is EvidenceAxis.STABILITY_MODEL_AWARE
     assert critique.repairable is True
     assert critique.feature_to_preserve
 
@@ -104,14 +104,14 @@ def test_critic_never_repairs_a_hard_violation() -> None:
     assert critique.repairable is False
 
 
-def test_lower_is_better_structure_and_dynamics_do_not_become_weaknesses() -> None:
+def test_dynamics_is_not_a_production_support_or_weakness_axis() -> None:
     candidate = _candidate()
     evaluation = Evaluation(
         candidate,
         (
             _numeric(candidate, EvidenceAxis.STRUCTURE_QUALITY, 0.1),
-            _numeric(candidate, EvidenceAxis.DYNAMICS, 0.2),
             _numeric(candidate, EvidenceAxis.SUBSTRATE_INTERFACE, 0.9),
+            _numeric(candidate, EvidenceAxis.DYNAMICS, 99.0),
         ),
     )
 
@@ -119,6 +119,7 @@ def test_lower_is_better_structure_and_dynamics_do_not_become_weaknesses() -> No
 
     assert critique.route is CriticRoute.PROMOTE
     assert critique.weakness_axis is None
+    assert all("dynamics" not in signal for signal in critique.supporting_signals)
 
 
 def test_repair_children_are_bounded_and_document_preservation_goal() -> None:
@@ -127,7 +128,7 @@ def test_repair_children_are_bounded_and_document_preservation_goal() -> None:
         parent,
         (
             _numeric(parent, EvidenceAxis.SUBSTRATE_INTERFACE, 0.9),
-            _numeric(parent, EvidenceAxis.STABILITY, 1.8),
+            _numeric(parent, EvidenceAxis.STABILITY_MODEL_AWARE, 0.9),
         ),
     )
     critique = CriticPolicy().critique(evaluation)
@@ -152,7 +153,7 @@ def test_repair_generation_stops_after_two_generations() -> None:
         parent,
         (
             _numeric(parent, EvidenceAxis.SUBSTRATE_INTERFACE, 0.9),
-            _numeric(parent, EvidenceAxis.STABILITY, 1.8),
+            _numeric(parent, EvidenceAxis.STABILITY_MODEL_AWARE, 0.9),
         ),
     )
     critique = CriticPolicy().critique(evaluation)
@@ -173,7 +174,7 @@ def test_real_repair_trajectory_persists_evidence_change(tmp_path: Path) -> None
         parent,
         (
             _numeric(parent, EvidenceAxis.SUBSTRATE_INTERFACE, 0.9),
-            _numeric(parent, EvidenceAxis.STABILITY, 1.8),
+            _numeric(parent, EvidenceAxis.STABILITY_MODEL_AWARE, 0.9),
         ),
     )
     critique = CriticPolicy().critique(parent_evaluation)
@@ -190,16 +191,18 @@ def test_real_repair_trajectory_persists_evidence_change(tmp_path: Path) -> None
     )
     ledger.add_candidate(proposal.child)
     ledger.record_repair(proposal)
-    child_stability = _numeric(proposal.child, EvidenceAxis.STABILITY, 0.4)
+    child_stability = _numeric(
+        proposal.child, EvidenceAxis.STABILITY_MODEL_AWARE, 0.1
+    )
     ledger.add_evidence(child_stability)
     ledger.record_repair_outcome(
         parent_id=parent.candidate_id,
         child_id=proposal.child.candidate_id,
-        evidence_delta={"stability": -1.4},
+        evidence_delta={"stability_model_aware": -0.8},
         disposition="PROMOTE",
     )
 
     trajectory = ledger.repair_trajectory(parent.candidate_id)
     assert trajectory[0]["child_id"] == proposal.child.candidate_id
-    assert trajectory[0]["evidence_delta"] == {"stability": -1.4}
+    assert trajectory[0]["evidence_delta"] == {"stability_model_aware": -0.8}
     assert trajectory[0]["disposition"] == "PROMOTE"

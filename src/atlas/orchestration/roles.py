@@ -62,7 +62,6 @@ class EvidenceBackedRoleExecutor:
         "screening": ("stability", "liability"),
         "structure": ("structure_quality",),
         "deeper_evaluation": ("catalytic_geometry", "substrate_interface"),
-        "simulation": ("dynamics",),
         "activity_evidence": ("activity_oriented",),
     }
 

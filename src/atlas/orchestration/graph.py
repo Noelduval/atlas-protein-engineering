@@ -24,7 +24,6 @@ _LINEAR_PREFIX = (
 )
 _PROMOTION_PATH = (
     "deeper_evaluation",
-    "simulation",
     "activity_evidence",
     "adversarial_critic",
     "portfolio_selection",

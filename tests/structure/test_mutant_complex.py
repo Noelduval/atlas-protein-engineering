@@ -14,6 +14,7 @@ from atlas.structure.mutant_complex import (
     detect_catastrophic_clashes,
     validate_required_zinc_coordination,
 )
+from atlas.structure.chemistry import validate_unintended_zinc_coordination
 from atlas.structure.reconstruct import reconstruct_active_like
 
 
@@ -110,3 +111,37 @@ def test_starting_and_legal_mutant_retain_required_zinc_coordination(tmp_path: P
     assert validate_required_zinc_coordination(source, "WT") == ()
     assert validate_required_zinc_coordination(result.raw_pdb, candidate.candidate_id) == ()
 
+
+def test_unintended_new_metal_ligand_is_a_hard_candidate_specific_failure(
+    tmp_path: Path,
+) -> None:
+    pytest.importorskip("pdbfixer")
+    source = _starting_pdb(tmp_path)
+    candidate = CandidateRecord.create(
+        reference_sequence=REFERENCE,
+        mutations=["A125H"],
+        parents=(),
+        strategy=DesignStrategy.SECOND_SHELL_PREORGANIZATION,
+        structural_region="second_shell",
+        round_index=1,
+        hypothesis="Test candidate-specific metal liability.",
+        intended_upside="Test fixture.",
+        expected_risk="Unintended Zn coordination.",
+        metal_liability="HIGH_RISK_METAL_SITE_HYPOTHESIS",
+        requires_candidate_geometry=True,
+    )
+    result = build_mutant_complex(source, candidate, tmp_path / "mutant", seed=622)
+    structure = PDBParser(QUIET=True).get_structure("mutant", result.raw_pdb)
+    zinc = next(atom for atom in structure.get_atoms() if atom.element == "ZN")
+    introduced = structure[0]["A"][125]["NE2"]
+    introduced.coord = zinc.coord + [2.0, 0.0, 0.0]
+    from Bio.PDB import PDBIO
+
+    writer = PDBIO()
+    writer.set_structure(structure)
+    coordinating = tmp_path / "coordinating.pdb"
+    writer.save(str(coordinating))
+
+    violations = validate_unintended_zinc_coordination(coordinating, candidate)
+
+    assert violations[0].code == "unintended_zinc_coordination"

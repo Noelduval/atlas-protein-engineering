@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 from Bio.PDB import NeighborSearch, PDBParser
 
-from atlas.adaptive.models import HardViolation
+from atlas.adaptive.models import CandidateRecord, HardViolation
 from atlas.geometry.selectors import (
     E122_OE1,
     E122_OE2,
@@ -82,3 +82,40 @@ def validate_required_zinc_coordination(
             )
     return tuple(violations)
 
+
+def validate_unintended_zinc_coordination(
+    pdb_path: str | Path,
+    candidate: CandidateRecord,
+) -> tuple[HardViolation, ...]:
+    """Reject newly introduced side-chain atoms entering the established Zn sphere."""
+    coordinating_atoms = {
+        "H": ("ND1", "NE2"),
+        "C": ("SG",),
+        "D": ("OD1", "OD2"),
+        "E": ("OE1", "OE2"),
+    }
+    structure = PDBParser(QUIET=True).get_structure("candidate_zinc", pdb_path)
+    zinc = select_atom(structure, ZINC)
+    violations: list[HardViolation] = []
+    for mutation in candidate.mutations:
+        atom_names = coordinating_atoms.get(mutation.mutant, ())
+        if not atom_names:
+            continue
+        residue = structure[0]["A"][mutation.position]
+        for atom_name in atom_names:
+            if atom_name not in residue:
+                continue
+            distance = float(zinc - residue[atom_name])
+            if distance <= 3.2:
+                violations.append(
+                    HardViolation(
+                        candidate.candidate_id,
+                        "unintended_zinc_coordination",
+                        (
+                            f"Introduced {mutation.label} {atom_name} is {distance:.3f} Å "
+                            "from Zn, inside the existing 1.5–3.2 Å coordination-policy "
+                            "range without a separately validated metal-site redesign."
+                        ),
+                    )
+                )
+    return tuple(violations)

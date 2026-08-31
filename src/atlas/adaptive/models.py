@@ -24,6 +24,7 @@ class DesignStrategy(str, Enum):
 
 class EvidenceAxis(str, Enum):
     STABILITY = "stability"
+    STABILITY_MODEL_AWARE = "stability_model_aware"
     STRUCTURE_QUALITY = "structure_quality"
     CATALYTIC_GEOMETRY = "catalytic_geometry"
     SUBSTRATE_INTERFACE = "substrate_interface"
@@ -123,6 +124,16 @@ class CandidateRecord:
     hypothesis: str
     intended_upside: str
     expected_risk: str
+    intended_physical_change: str = "Not separately annotated in the legacy record."
+    feature_to_preserve: str = "Resolved scaffold and active-site integrity."
+    principal_biochemical_risk: str = "Unresolved mutation-specific biochemical risk."
+    metal_liability: str = "none_identified"
+    requires_candidate_geometry: bool = False
+    double_category: str | None = None
+    physical_coupling: str | None = None
+    epistasis_uncertainty: str | None = None
+    known_experiment_conflict: str = "none_identified"
+    substitution_classes: tuple[str, ...] = ()
     revision_generation: int = 0
     disposition: CandidateDisposition = CandidateDisposition.PENDING
 
@@ -139,6 +150,16 @@ class CandidateRecord:
         hypothesis: str,
         intended_upside: str,
         expected_risk: str,
+        intended_physical_change: str | None = None,
+        feature_to_preserve: str | None = None,
+        principal_biochemical_risk: str | None = None,
+        metal_liability: str = "none_identified",
+        requires_candidate_geometry: bool = False,
+        double_category: str | None = None,
+        physical_coupling: str | None = None,
+        epistasis_uncertainty: str | None = None,
+        known_experiment_conflict: str = "none_identified",
+        substitution_classes: Iterable[str] = (),
         revision_generation: int = 0,
         disposition: CandidateDisposition = CandidateDisposition.PENDING,
     ) -> CandidateRecord:
@@ -169,6 +190,26 @@ class CandidateRecord:
             hypothesis=hypothesis,
             intended_upside=intended_upside,
             expected_risk=expected_risk,
+            intended_physical_change=(
+                intended_upside
+                if intended_physical_change is None
+                else intended_physical_change
+            ),
+            feature_to_preserve=(
+                hypothesis if feature_to_preserve is None else feature_to_preserve
+            ),
+            principal_biochemical_risk=(
+                expected_risk
+                if principal_biochemical_risk is None
+                else principal_biochemical_risk
+            ),
+            metal_liability=metal_liability,
+            requires_candidate_geometry=bool(requires_candidate_geometry),
+            double_category=double_category,
+            physical_coupling=physical_coupling,
+            epistasis_uncertainty=epistasis_uncertainty,
+            known_experiment_conflict=known_experiment_conflict,
+            substitution_classes=tuple(substitution_classes),
             revision_generation=revision_generation,
             disposition=CandidateDisposition(disposition),
         )
@@ -189,6 +230,16 @@ class CandidateRecord:
             "hypothesis": self.hypothesis,
             "intended_upside": self.intended_upside,
             "expected_risk": self.expected_risk,
+            "intended_physical_change": self.intended_physical_change,
+            "feature_to_preserve": self.feature_to_preserve,
+            "principal_biochemical_risk": self.principal_biochemical_risk,
+            "metal_liability": self.metal_liability,
+            "requires_candidate_geometry": self.requires_candidate_geometry,
+            "double_category": self.double_category,
+            "physical_coupling": self.physical_coupling,
+            "epistasis_uncertainty": self.epistasis_uncertainty,
+            "known_experiment_conflict": self.known_experiment_conflict,
+            "substitution_classes": list(self.substitution_classes),
             "revision_generation": self.revision_generation,
             "disposition": self.disposition.value,
         }
@@ -206,6 +257,36 @@ class CandidateRecord:
             hypothesis=str(data["hypothesis"]),
             intended_upside=str(data["intended_upside"]),
             expected_risk=str(data["expected_risk"]),
+            intended_physical_change=str(
+                data.get("intended_physical_change", data["intended_upside"])
+            ),
+            feature_to_preserve=str(
+                data.get("feature_to_preserve", data["hypothesis"])
+            ),
+            principal_biochemical_risk=str(
+                data.get("principal_biochemical_risk", data["expected_risk"])
+            ),
+            metal_liability=str(data.get("metal_liability", "none_identified")),
+            requires_candidate_geometry=bool(
+                data.get("requires_candidate_geometry", False)
+            ),
+            double_category=(
+                None if data.get("double_category") is None else str(data["double_category"])
+            ),
+            physical_coupling=(
+                None
+                if data.get("physical_coupling") is None
+                else str(data["physical_coupling"])
+            ),
+            epistasis_uncertainty=(
+                None
+                if data.get("epistasis_uncertainty") is None
+                else str(data["epistasis_uncertainty"])
+            ),
+            known_experiment_conflict=str(
+                data.get("known_experiment_conflict", "none_identified")
+            ),
+            substitution_classes=tuple(data.get("substitution_classes", ())),
             revision_generation=int(data.get("revision_generation", 0)),
             disposition=CandidateDisposition(data.get("disposition", "pending")),
         )
@@ -350,4 +431,3 @@ class CompletionAudit:
     @property
     def complete(self) -> bool:
         return not self.blockers
-

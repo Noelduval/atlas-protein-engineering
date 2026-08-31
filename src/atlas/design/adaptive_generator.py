@@ -11,9 +11,10 @@ from atlas.adaptive.ledger import DuplicateCandidateError, ScientificLedger
 from atlas.adaptive.models import CandidateRecord, DesignStrategy, FailureObservation
 from atlas.design.design_space import ResidueClass, ResidueDesignRecord
 from atlas.design.strategies import (
+    SubstitutionProposal,
     strategy_for_residue,
     strategy_narrative,
-    substitution_order,
+    substitution_policy,
 )
 
 
@@ -68,13 +69,17 @@ class AdaptiveGenerator:
         return hashlib.sha256(f"{self.seed}:{label}".encode()).hexdigest()
 
     def _single_candidate(
-        self, record: ResidueDesignRecord, mutant: str, *, round_index: int
+        self,
+        record: ResidueDesignRecord,
+        proposal: SubstitutionProposal,
+        *,
+        round_index: int,
     ) -> CandidateRecord:
         strategy = strategy_for_residue(record)
-        hypothesis, upside, risk = strategy_narrative(strategy, record, mutant)
+        hypothesis, upside, risk = strategy_narrative(strategy, record, proposal)
         return CandidateRecord.create(
             reference_sequence=self.reference_sequence,
-            mutations=[f"{record.wildtype}{record.position}{mutant}"],
+            mutations=[f"{record.wildtype}{record.position}{proposal.mutant}"],
             parents=(),
             strategy=strategy,
             structural_region=record.structural_region,
@@ -82,29 +87,35 @@ class AdaptiveGenerator:
             hypothesis=hypothesis,
             intended_upside=upside,
             expected_risk=risk,
+            intended_physical_change=proposal.intended_physical_change,
+            feature_to_preserve=proposal.feature_to_preserve,
+            principal_biochemical_risk=proposal.principal_biochemical_risk,
+            metal_liability=proposal.metal_liability,
+            requires_candidate_geometry=proposal.requires_candidate_geometry,
+            substitution_classes=(proposal.substitution_class,),
         )
 
     def _single_pool(
         self,
         penalized_mutations: frozenset[str],
         penalized_substitutions: frozenset[str] = frozenset(),
-    ) -> list[tuple[ResidueDesignRecord, str, int, bool]]:
-        pool: list[tuple[ResidueDesignRecord, str, int, bool]] = []
+    ) -> list[tuple[ResidueDesignRecord, SubstitutionProposal, int, bool]]:
+        pool: list[tuple[ResidueDesignRecord, SubstitutionProposal, int, bool]] = []
         for record in self.design_space:
             if record.residue_class not in {
                 ResidueClass.DESIGNABLE,
                 ResidueClass.CONTEXT_SENSITIVE,
             }:
                 continue
-            for substitution_rank, mutant in enumerate(substitution_order(record)):
-                label = f"{record.wildtype}{record.position}{mutant}"
+            for substitution_rank, proposal in enumerate(substitution_policy(record)):
+                label = f"{record.wildtype}{record.position}{proposal.mutant}"
                 pool.append(
                     (
                         record,
-                        mutant,
+                        proposal,
                         substitution_rank,
                         label in penalized_mutations
-                        or f"{record.structural_region}:{mutant}"
+                        or f"{record.structural_region}:{proposal.mutant}"
                         in penalized_substitutions,
                     )
                 )
@@ -172,7 +183,7 @@ class AdaptiveGenerator:
             key=lambda item: (
                 item[3],
                 item[2],
-                self._seed_tiebreaker(f"{item[0].position}:{item[1]}"),
+                self._seed_tiebreaker(f"{item[0].position}:{item[1].mutant}"),
             ),
         )
         round1_specs = broad[: budget.round1_target]
@@ -182,8 +193,8 @@ class AdaptiveGenerator:
                 "Round-1 singles"
             )
         return tuple(
-            self._single_candidate(record, mutant, round_index=1)
-            for record, mutant, _, _ in round1_specs
+            self._single_candidate(record, proposal, round_index=1)
+            for record, proposal, _, _ in round1_specs
         )
 
     def generate_round2(
@@ -207,7 +218,9 @@ class AdaptiveGenerator:
         priority = tuple(dict.fromkeys(int(position) for position in position_priority))
         priority_rank = {position: index for index, position in enumerate(priority)}
         remaining = [
-            item for item in pool if (item[0].position, item[1]) not in round1_keys
+            item
+            for item in pool
+            if (item[0].position, item[1].mutant) not in round1_keys
         ]
         remaining.sort(
             key=lambda item: (
@@ -215,15 +228,17 @@ class AdaptiveGenerator:
                 0 if item[0].position in priority_rank else 1,
                 priority_rank.get(item[0].position, item[2]),
                 item[2],
-                self._seed_tiebreaker(f"expand:{item[0].position}:{item[1]}"),
+                self._seed_tiebreaker(
+                    f"expand:{item[0].position}:{item[1].mutant}"
+                ),
             )
         )
         maximum_singles = budget.candidate_budget - budget.minimum_doubles
         round2_capacity = max(0, maximum_singles - len(round1))
         round2_specs = remaining[:round2_capacity]
         return tuple(
-            self._single_candidate(record, mutant, round_index=2)
-            for record, mutant, _, _ in round2_specs
+            self._single_candidate(record, proposal, round_index=2)
+            for record, proposal, _, _ in round2_specs
         )
 
     def generate_round3(
@@ -275,6 +290,7 @@ class AdaptiveGenerator:
         seen: set[str] = set()
         deferred: list[CandidateRecord] = []
         count = len(parents)
+        records_by_position = {record.position: record for record in self.design_space}
         for offset in range(1, count):
             for left_index in range(count):
                 right_index = (left_index + offset) % count
@@ -285,8 +301,51 @@ class AdaptiveGenerator:
                     continue
                 mutations = tuple(sorted(left.mutations + right.mutations))
                 mutation_set = "/".join(mutation.label for mutation in mutations)
+                if mutation_set == "Y91F/D126A":
+                    continue
                 regions = {left.structural_region, right.structural_region}
                 region = left.structural_region if len(regions) == 1 else "cross_region"
+                left_record = records_by_position[left.mutations[0].position]
+                right_record = records_by_position[right.mutations[0].position]
+                direct_contact = (
+                    right_record.position in left_record.packing_neighbor_positions
+                    or left_record.position in right_record.packing_neighbor_positions
+                )
+                shared_substrate_network = (
+                    left_record.min_substrate_distance_a <= 5.0
+                    and right_record.min_substrate_distance_a <= 5.0
+                )
+                shared_preorganization_network = (
+                    left_record.min_zinc_distance_a <= 10.0
+                    and right_record.min_zinc_distance_a <= 10.0
+                )
+                function_regions = {"substrate_interface", "second_shell"}
+                stability_regions = {"distal_stability", "scaffold_surface"}
+                if direct_contact or shared_substrate_network or shared_preorganization_network:
+                    double_category = "LOCAL_COUPLED_DOUBLE"
+                    coupling = (
+                        "direct heavy-atom packing contact"
+                        if direct_contact
+                        else "shared deposited substrate/catalytic preorganization network"
+                    )
+                elif (
+                    left.structural_region in function_regions
+                    and right.structural_region in stability_regions
+                ) or (
+                    right.structural_region in function_regions
+                    and left.structural_region in stability_regions
+                ):
+                    double_category = "FUNCTION_STABILITY_RESCUE_DOUBLE"
+                    coupling = (
+                        "function-oriented mutation paired with a distal/scaffold-support "
+                        "hypothesis"
+                    )
+                else:
+                    double_category = "ORTHOGONAL_MECHANISM_DOUBLE"
+                    coupling = (
+                        "spatially separated positions with distinct structural-region "
+                        "mechanisms"
+                    )
                 candidate = CandidateRecord.create(
                     reference_sequence=self.reference_sequence,
                     mutations=mutations,
@@ -304,6 +363,35 @@ class AdaptiveGenerator:
                     ),
                     expected_risk=(
                         "Combination-specific epistasis may negate either single-mutant benefit."
+                    ),
+                    intended_physical_change=(
+                        f"Combine {left.intended_physical_change} with "
+                        f"{right.intended_physical_change}."
+                    ),
+                    feature_to_preserve=(
+                        f"{left.feature_to_preserve}; {right.feature_to_preserve}."
+                    ),
+                    principal_biochemical_risk=(
+                        "High combination-specific epistasis uncertainty; child structure "
+                        "must be compared with both parents."
+                    ),
+                    metal_liability=(
+                        "HIGH_RISK_METAL_SITE_HYPOTHESIS"
+                        if "HIGH_RISK_METAL_SITE_HYPOTHESIS"
+                        in {left.metal_liability, right.metal_liability}
+                        else "none_identified"
+                    ),
+                    requires_candidate_geometry=(
+                        left.requires_candidate_geometry
+                        or right.requires_candidate_geometry
+                    ),
+                    double_category=double_category,
+                    physical_coupling=coupling,
+                    epistasis_uncertainty="high",
+                    known_experiment_conflict="none_identified",
+                    substitution_classes=(
+                        left.substitution_classes[0],
+                        right.substitution_classes[0],
                     ),
                 )
                 if candidate.candidate_id in seen:
