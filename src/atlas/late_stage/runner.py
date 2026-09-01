@@ -6,6 +6,7 @@ from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import asdict, dataclass, is_dataclass
 import json
 from pathlib import Path
+import subprocess
 from typing import Any
 
 from Bio.PDB import PDBParser
@@ -96,6 +97,7 @@ def _axis_record(
     method: str,
     artifact_path: Path,
     payload: Mapping[str, Any],
+    implementation_commit: str,
 ) -> EvidenceRecord:
     return EvidenceRecord(
         candidate_id=candidate_id,
@@ -106,6 +108,7 @@ def _axis_record(
         method=method,
         provenance={
             "protocol": _PROTOCOL,
+            "implementation_commit": implementation_commit,
             "artifact_path": str(artifact_path),
             "evidence_tier": "COMPUTATIONAL_SUPPORT",
         },
@@ -167,6 +170,16 @@ def run_late_stage(
 ) -> LateStageRunResult:
     """Evaluate only the persisted adversarial set and write resumable artifacts."""
     root = Path(run_dir)
+    revision = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=Path.cwd(),
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    implementation_commit = revision.stdout.strip()
+    if revision.returncode or len(implementation_commit) != 40:
+        raise RuntimeError("Late-stage implementation commit cannot be resolved")
     output = root / "late_stage"
     completion_path = output / "completion.json"
     if completion_path.is_file():
@@ -324,6 +337,7 @@ def run_late_stage(
                     method="real external sequence-to-structure adapter",
                     artifact_path=orthogonal_artifact,
                     payload=orthogonal_payload,
+                    implementation_commit=implementation_commit,
                 ),
                 _axis_record(
                     candidate_id,
@@ -333,6 +347,7 @@ def run_late_stage(
                     method="bounded Aβ42 local-window contact-compatibility panel",
                     artifact_path=specificity_artifact,
                     payload=specificity_payload,
+                    implementation_commit=implementation_commit,
                 ),
                 _axis_record(
                     candidate_id,
@@ -342,6 +357,7 @@ def run_late_stage(
                     method="deterministic resolved-pose local perturbations",
                     artifact_path=pose_artifact,
                     payload=pose_payload,
+                    implementation_commit=implementation_commit,
                 ),
                 _axis_record(
                     candidate_id,
@@ -351,6 +367,7 @@ def run_late_stage(
                     method="deterministic sequence/static-structure risk heuristics",
                     artifact_path=developability_artifact,
                     payload=developability_payload,
+                    implementation_commit=implementation_commit,
                 ),
             )
             evidence_to_add.extend(
@@ -456,6 +473,7 @@ def run_late_stage(
             "late_stage_portfolio_selected",
             {
                 "protocol": _PROTOCOL,
+                "implementation_commit": implementation_commit,
                 "finalist_ids": list(selected),
                 "universal_score": False,
                 "experimentally_untested": True,
@@ -465,6 +483,7 @@ def run_late_stage(
         completed = {
             "status": "completed",
             "protocol": _PROTOCOL,
+            "implementation_commit": implementation_commit,
             "seed": seed,
             "evaluated_candidate_ids": list(candidate_ids),
             "finalist_ids": list(selected),
