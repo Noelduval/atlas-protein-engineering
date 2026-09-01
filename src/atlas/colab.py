@@ -544,3 +544,26 @@ def build_adaptive_stage_command(
     if stop_after:
         command.extend(["--stop-after", stop_after])
     return command
+
+
+def build_late_stage_command(
+    *,
+    python_executable: str,
+    run_dir: str | Path,
+    seed: int = 622,
+    resume: bool = False,
+) -> list[str]:
+    """Build the bounded command that consumes an already completed adaptive run."""
+    command = [
+        python_executable,
+        "-m",
+        "atlas",
+        "late-stage",
+        "--run-dir",
+        str(run_dir),
+        "--seed",
+        str(seed),
+    ]
+    if resume:
+        command.append("--resume")
+    return command

@@ -31,6 +31,10 @@ class EvidenceAxis(str, Enum):
     DYNAMICS = "dynamics"
     LIABILITY = "liability"
     ACTIVITY_ORIENTED = "activity_oriented"
+    ORTHOGONAL_STRUCTURE = "orthogonal_structure"
+    SUBSTRATE_SPECIFICITY = "substrate_specificity"
+    POSE_ROBUSTNESS = "pose_robustness"
+    DEVELOPABILITY = "developability"
 
 
 class EvidenceStatus(str, Enum):

@@ -9,6 +9,7 @@ import pandas as pd
 import typer
 
 from atlas.adaptive_pipeline import AdaptivePipelineConfig, run_adaptive_pipeline
+from atlas.late_stage.runner import run_late_stage
 from atlas.pipeline import PipelineConfig, run_pipeline
 from atlas.preflight import run_preflight as run_environment_preflight
 from atlas.structure.reconstruct import reconstruct_active_like
@@ -250,3 +251,35 @@ def adaptive_run(
     )
     if result.finalist_ids:
         typer.echo("Finalists are EXPERIMENTALLY UNTESTED: " + ", ".join(result.finalist_ids))
+
+
+@app.command("late-stage")
+def late_stage(
+    run_dir: Annotated[
+        Path, typer.Option(help="Completed adaptive run directory to consume.")
+    ],
+    input_path: Annotated[
+        Path, typer.Option("--input", help="Committed 23WN mmCIF input.")
+    ] = Path("data/23WN.cif"),
+    seed: Annotated[int, typer.Option(help="Deterministic local-perturbation seed.")] = 622,
+    resume: Annotated[
+        bool, typer.Option(help="Reuse a completed late-stage checkpoint.")
+    ] = False,
+) -> None:
+    """Run only late-stage evidence on a completed adaptive checkpoint."""
+    try:
+        result = run_late_stage(
+            run_dir=run_dir,
+            input_structure=input_path,
+            seed=seed,
+            resume=resume,
+        )
+    except Exception as exc:
+        typer.echo(f"Late-stage Atlas stopped: {type(exc).__name__}: {exc}", err=True)
+        raise typer.Exit(2) from exc
+    typer.echo(f"Late-stage Atlas status: {result.status}")
+    typer.echo(f"Late-stage summary: {result.summary_path}")
+    typer.echo(
+        "Finalists are EXPERIMENTALLY UNTESTED: "
+        + (", ".join(result.finalist_ids) if result.finalist_ids else "NONE")
+    )

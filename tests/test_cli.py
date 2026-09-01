@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from types import SimpleNamespace
 
 from typer.testing import CliRunner
 
@@ -94,3 +95,39 @@ def test_adaptive_run_can_checkpoint_setup_without_model_repositories(tmp_path: 
     run_dir = tmp_path / "adaptive-setup"
     assert (run_dir / "design_space.csv").is_file()
     assert (run_dir / "design_memory" / "atlas_science.sqlite").is_file()
+
+
+def test_late_stage_command_consumes_existing_run(monkeypatch, tmp_path: Path) -> None:
+    captured = {}
+
+    def fake_run_late_stage(**kwargs):
+        captured.update(kwargs)
+        return SimpleNamespace(
+            status="completed",
+            finalist_ids=("ATLAS-ONE",),
+            summary_path=tmp_path / "late_stage" / "completion.json",
+        )
+
+    monkeypatch.setattr("atlas.cli.run_late_stage", fake_run_late_stage)
+    result = runner.invoke(
+        app,
+        [
+            "late-stage",
+            "--run-dir",
+            str(tmp_path),
+            "--input",
+            "data/23WN.cif",
+            "--seed",
+            "622",
+            "--resume",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert captured == {
+        "run_dir": tmp_path,
+        "input_structure": Path("data/23WN.cif"),
+        "seed": 622,
+        "resume": True,
+    }
+    assert "ATLAS-ONE" in result.output

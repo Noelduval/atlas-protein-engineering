@@ -12,6 +12,8 @@ atlas adaptive-run
 → candidate-specific mutant complexes
 → chemistry, catalytic-preorganization, and Aβ pose/contact evidence
 → bounded repair and adversarial review
+→ orthogonal fold-recovery adapter, bounded Aβ specificity and local-pose robustness
+→ sequence/static-structure developability risk screen and wet-lab dossiers
 → ≤5 experimentally untested wet-lab hypotheses
 ```
 
@@ -50,6 +52,7 @@ Replicated MD is not a production adaptive stage, evidence-completeness requirem
 | `adaptive_pipeline.py` | Checkpointed production authority |
 | `adaptive_backend.py` | Pinned stability inference and candidate-specific structures |
 | `reporting/adaptive_outputs.py` | Finalists, dossiers, evidence exports, figures, and manifest |
+| `late_stage/` | Checkpoint-reusing orthogonal structure, specificity, pose-robustness, developability, and dossier evidence |
 
 `candidate_generator.py`, `rank_candidates.py`, the historical validation-gated `atlas run` workflow, and legacy orchestration paths are not authorities for adaptive finalists.
 
@@ -71,9 +74,14 @@ atlas adaptive-run \
   --thermompnn-d-repo .external/ThermoMPNN-D \
   --run-id atlas-adaptive-production \
   --candidate-budget 5000
+
+atlas late-stage \
+  --run-dir outputs/atlas-adaptive-production \
+  --input data/23WN.cif \
+  --resume
 ```
 
-The Colab entry point is [`notebooks/Atlas_DP622_Colab.ipynb`](notebooks/Atlas_DP622_Colab.ipynb). It uses a T4 runtime, pinned model revisions, a single managed scientific Python environment, Google Drive checkpoints, and `atlas adaptive-run --resume`.
+The Colab entry point is [`notebooks/Atlas_DP622_Colab.ipynb`](notebooks/Atlas_DP622_Colab.ipynb). It uses a T4 runtime, pinned model revisions, a single managed scientific Python environment, Google Drive checkpoints, `atlas adaptive-run --resume`, and then `atlas late-stage --resume` only on the persisted adversarial set. If the real external sequence-to-structure predictor is absent or fails, that evidence is recorded as unavailable/invalid; Atlas never substitutes synthetic structure-prediction evidence.
 
 ## Production artifacts
 

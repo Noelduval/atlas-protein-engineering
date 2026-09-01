@@ -10,7 +10,11 @@ import sys
 import pytest
 
 import atlas.colab as colab
-from atlas.colab import build_adaptive_stage_command, build_stage_command
+from atlas.colab import (
+    build_adaptive_stage_command,
+    build_late_stage_command,
+    build_stage_command,
+)
 
 
 def _notebook_cell(tag: str) -> dict[str, object]:
@@ -101,6 +105,37 @@ def test_adaptive_stage_command_uses_prospective_cli_and_resume() -> None:
     assert command[-3:] == ["--resume", "--stop-after", "round3"]
 
 
+def test_late_stage_command_reuses_completed_run_without_upstream_model_arguments() -> None:
+    command = build_late_stage_command(
+        python_executable="python",
+        run_dir=Path("/content/drive/MyDrive/Atlas/checkpoints/run"),
+        seed=622,
+        resume=True,
+    )
+
+    assert command == [
+        "python",
+        "-m",
+        "atlas",
+        "late-stage",
+        "--run-dir",
+        "/content/drive/MyDrive/Atlas/checkpoints/run",
+        "--seed",
+        "622",
+        "--resume",
+    ]
+
+
+def test_notebook_late_stage_cell_consumes_completed_checkpoint_only() -> None:
+    source = "".join(_notebook_cell("late-stage-production")["source"])
+
+    assert "'late-stage'" in source
+    assert "ADAPTIVE_RUN_DIR" in source
+    assert "--resume" in source
+    assert "adaptive-run" not in source
+    assert "ThermoMPNN" not in source
+
+
 def test_notebook_builds_one_pinned_scientific_python_environment() -> None:
     build_commands = _notebook_function(
         "repository-setup",
@@ -160,32 +195,39 @@ def test_notebook_builds_one_pinned_scientific_python_environment() -> None:
         "pandas==2.2.3",
         "pytorch-lightning==2.4.0",
         "torchmetrics==1.6.0",
-        "openmm[cuda12]==8.2.0",
+        "openmm==8.2.0",
+        "openmm-cuda-12==8.2.0",
     } <= set(commands[3])
     assert all(scientific_python in command for command in commands[2:])
 
 
 def test_notebook_routes_atlas_stages_through_scientific_python() -> None:
     build_command = _notebook_function(
-        "full-preflight",
-        "build_atlas_stage_command",
-        {
-            "Path": Path,
-            "SCIENTIFIC_PYTHON": Path("/content/atlas-science/bin/python"),
-            "INPUT_STRUCTURE": Path("/content/Atlas/data/23WN.cif"),
-            "OUTPUT_ROOT": Path("/content/checkpoints"),
-            "ATLAS_DIR": Path("/content/Atlas"),
-            "EXTERNAL": Path("/content/Atlas/.external"),
-            "DYNAMICS_MODE": "minimize",
-            "RUN_ID": "atlas-t4-test",
-        },
+        "adaptive-config",
+        "build_adaptive_stage_command",
     )
 
-    command = build_command("thermompnn-d", resume=True)
+    command = build_command(
+        python_executable="/content/atlas-science/bin/python",
+        input_structure="/content/Atlas/data/23WN.cif",
+        output_root="/content/checkpoints",
+        atlas_repo="/content/Atlas",
+        thermompnn_repo="/content/Atlas/.external/ThermoMPNN",
+        thermompnn_d_repo="/content/Atlas/.external/ThermoMPNN-D",
+        run_id="atlas-adaptive-t4-test",
+        candidate_budget=5000,
+        broad_target=500,
+        structure_target=100,
+        adversarial_target=10,
+        portfolio_target=5,
+        seed=622,
+        stop_after="structure",
+        resume=True,
+    )
 
     assert command[0] == "/content/atlas-science/bin/python"
-    assert command[1:4] == ["-m", "atlas", "run"]
-    assert command[-3:] == ["--stop-after", "thermompnn-d", "--resume"]
+    assert command[1:4] == ["-m", "atlas", "adaptive-run"]
+    assert command[-3:] == ["--resume", "--stop-after", "structure"]
 
 
 def test_notebook_host_kernel_never_imports_atlas() -> None:
@@ -248,22 +290,20 @@ def test_notebook_configuration_and_stage_cells_are_executable() -> None:
         "atlas-config",
         "hardware-check",
         "repository-setup",
+        "activate-atlas-install",
+        "upstream-runtime-config",
         "full-preflight",
-        "structure",
-        "benchmark",
-        "thermompnn",
-        "thermompnn-d",
-        "geometry",
-        "openmm",
-        "validation",
-        "candidates",
-        "export",
+        "runtime-readiness",
+        "adaptive-config",
+        "adaptive-production",
+        "late-stage-production",
+        "adaptive-export",
     }
     assert required <= tagged.keys()
     namespace: dict[str, object] = {}
     exec("".join(tagged["atlas-config"]["source"]), namespace)
     assert namespace["ATLAS_REF"] == "codex/atlas-v1-dynamic-geometry"
-    assert namespace["DYNAMICS_MODE"] == "minimize"
+    assert "DYNAMICS_MODE" not in namespace
     assert namespace["USE_GOOGLE_DRIVE"] is True
     for index, cell in enumerate(notebook["cells"]):
         if cell["cell_type"] == "code":
@@ -389,17 +429,17 @@ def test_notebook_stage_wrapper_runs_generated_scientific_command(
     tmp_path: Path,
 ) -> None:
     notebook = json.loads(Path("notebooks/Atlas_DP622_Colab.ipynb").read_text())
-    preflight_cell = next(
+    adaptive_cell = next(
         cell
         for cell in notebook["cells"]
-        if "full-preflight" in cell.get("metadata", {}).get("tags", [])
+        if "adaptive-config" in cell.get("metadata", {}).get("tags", [])
     )
-    tree = ast.parse("".join(preflight_cell["source"]))
+    tree = ast.parse("".join(adaptive_cell["source"]))
     functions = [
         node
         for node in tree.body
         if isinstance(node, ast.FunctionDef)
-        and node.name in {"build_atlas_stage_command", "run_atlas_stage"}
+        and node.name in {"build_adaptive_stage_command", "run_adaptive_stage"}
     ]
     recorded: dict[str, object] = {}
 
@@ -407,13 +447,12 @@ def test_notebook_stage_wrapper_runs_generated_scientific_command(
         recorded.update(label=label, command=command, cwd=cwd)
 
     namespace = {
-        "RUN_DIR": tmp_path / "run",
+        "ADAPTIVE_RUN_DIR": tmp_path / "run",
         "INPUT_STRUCTURE": tmp_path / "23WN.cif",
         "OUTPUT_ROOT": tmp_path / "outputs",
         "ATLAS_DIR": tmp_path,
         "EXTERNAL": tmp_path / ".external",
-        "DYNAMICS_MODE": "minimize",
-        "RUN_ID": "diagnostic-run",
+        "ADAPTIVE_RUN_ID": "diagnostic-run",
         "SCIENTIFIC_PYTHON": Path("/content/atlas-science/bin/python"),
         "run_bootstrap_command": record_command,
     }
@@ -426,7 +465,7 @@ def test_notebook_stage_wrapper_runs_generated_scientific_command(
         namespace,
     )
 
-    namespace["run_atlas_stage"]("Structure stage", "structure")
+    namespace["run_adaptive_stage"]("Structure stage", "structure")
 
     assert recorded["label"] == "Structure stage"
     assert recorded["cwd"] == tmp_path
@@ -767,7 +806,7 @@ def test_notebook_runs_runtime_readiness_before_structure(tmp_path: Path) -> Non
         for index, cell in enumerate(notebook["cells"])
         for tag in cell.get("metadata", {}).get("tags", [])
     }
-    assert tagged_indexes["runtime-readiness"] < tagged_indexes["structure"]
+    assert tagged_indexes["runtime-readiness"] < tagged_indexes["adaptive-production"]
 
 
 def test_notebook_configures_upstream_paths_before_preflight(tmp_path: Path) -> None:
