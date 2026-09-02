@@ -43,12 +43,35 @@ class PoseRobustnessAssessment:
     warnings: tuple[str, ...]
 
 
+@dataclass(frozen=True)
+class CandidatePoseRobustnessAssessment:
+    variant_id: str
+    classification: str
+    samples: tuple[PoseGeometrySample, ...]
+    thresholds: dict[str, float]
+    max_substrate_rmsd_a: float | None
+    max_substrate_pose_drift_a: float | None
+    max_zn_scissile_distance_delta_a: float | None
+    max_e96_scissile_distance_delta_a: float | None
+    max_h172_scissile_distance_delta_a: float | None
+    minimum_contact_retention_fraction: float | None
+    baseline_contact_count: int
+    method: str
+    interpretation_limit: str
+    warnings: tuple[str, ...]
+
+
 _THRESHOLDS = {
     "substrate_rmsd_a": 0.60,
     "substrate_pose_drift_a": 0.50,
     "zn_scissile_distance_delta_a": 0.50,
     "e96_scissile_distance_delta_a": 0.75,
     "h172_scissile_distance_delta_a": 0.75,
+}
+
+_CANDIDATE_RELATIVE_THRESHOLDS = {
+    **_THRESHOLDS,
+    "minimum_contact_retention_fraction": 0.65,
 }
 
 
@@ -267,6 +290,188 @@ def assess_local_pose_robustness(
         max_zn_scissile_distance_delta_a=max_zn_delta,
         max_e96_scissile_distance_delta_a=max_e96_delta,
         max_h172_scissile_distance_delta_a=max_h172_delta,
+        method=method,
+        interpretation_limit=limit,
+        warnings=warnings,
+    )
+
+
+def _residue_contact_pairs(path: Path, cutoff_a: float = 4.5) -> frozenset[tuple[int, int]]:
+    structure = PDBParser(QUIET=True).get_structure("contacts", path)
+    model = next(structure.get_models())
+    if "A" not in model or "B" not in model:
+        return frozenset()
+    pairs: set[tuple[int, int]] = set()
+    for enzyme in model["A"]:
+        enzyme_coordinates = np.asarray(
+            [atom.coord for atom in enzyme if atom.element.upper() != "H"],
+            dtype=float,
+        )
+        if not len(enzyme_coordinates):
+            continue
+        for substrate in model["B"]:
+            substrate_coordinates = np.asarray(
+                [atom.coord for atom in substrate if atom.element.upper() != "H"],
+                dtype=float,
+            )
+            if not len(substrate_coordinates):
+                continue
+            minimum = float(
+                np.linalg.norm(
+                    enzyme_coordinates[:, None, :]
+                    - substrate_coordinates[None, :, :],
+                    axis=2,
+                ).min()
+            )
+            if minimum <= cutoff_a:
+                pairs.add((int(enzyme.id[1]), int(substrate.id[1])))
+    return frozenset(pairs)
+
+
+def assess_candidate_pose_robustness(
+    candidate_pdb: str | Path,
+    *,
+    active_reference_pdb: str | Path,
+    output_dir: str | Path,
+    variant_id: str | None = None,
+    translation_distance_a: float = 0.35,
+    rotation_degrees: float = 2.5,
+) -> CandidatePoseRobustnessAssessment:
+    """Measure local sensitivity from the candidate baseline plus contact retention.
+
+    Absolute reference-relative coherence remains an upstream structural/Critic gate;
+    this assessment therefore avoids counting that same baseline offset a second time.
+    """
+    path = Path(candidate_pdb)
+    identifier = variant_id or path.stem
+    method = (
+        "Fixed resolved Aβ34–41 perturbations measured from the candidate baseline, "
+        "with candidate-specific residue-contact retention (atlas-pose-v2)."
+    )
+    limit = (
+        "This is a deterministic local sensitivity analysis, not a conformational "
+        "ensemble of full-length Aβ42; baseline absolute coherence is evaluated upstream."
+    )
+    baseline = measure_geometry(
+        path,
+        reference_pdb=active_reference_pdb,
+        variant_id=f"{identifier}:baseline",
+    )
+    baseline_contacts = _residue_contact_pairs(path)
+    try:
+        perturbations = generate_local_pose_perturbations(
+            path,
+            output_dir,
+            variant_id=identifier,
+            translation_distance_a=translation_distance_a,
+            rotation_degrees=rotation_degrees,
+        )
+    except (ValueError, OSError) as exc:
+        return CandidatePoseRobustnessAssessment(
+            identifier,
+            "indeterminate",
+            (),
+            dict(_CANDIDATE_RELATIVE_THRESHOLDS),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            len(baseline_contacts),
+            method,
+            limit,
+            (str(exc),),
+        )
+
+    samples = tuple(
+        PoseGeometrySample(
+            pose_id=perturbation.pose_id,
+            path=perturbation.path,
+            geometry=measure_geometry(
+                perturbation.path,
+                reference_pdb=path,
+                variant_id=f"{identifier}:{perturbation.pose_id}",
+            ),
+        )
+        for perturbation in perturbations
+    )
+    geometries = [sample.geometry for sample in samples]
+    max_substrate_rmsd = _maximum([item.substrate_rmsd_a for item in geometries])
+    max_pose_drift = _maximum([item.substrate_pose_drift_a for item in geometries])
+    max_zn_delta = _maximum_delta(
+        [item.zn_scissile_oxygen_distance_a for item in geometries],
+        baseline.zn_scissile_oxygen_distance_a,
+    )
+    max_e96_delta = _maximum_delta(
+        [item.e96_to_scissile_carbonyl_distance_a for item in geometries],
+        baseline.e96_to_scissile_carbonyl_distance_a,
+    )
+    max_h172_delta = _maximum_delta(
+        [item.h172_to_scissile_oxygen_distance_a for item in geometries],
+        baseline.h172_to_scissile_oxygen_distance_a,
+    )
+    retention = (
+        None
+        if not baseline_contacts
+        else min(
+            len(baseline_contacts & _residue_contact_pairs(sample.path))
+            / len(baseline_contacts)
+            for sample in samples
+        )
+    )
+    observed = {
+        "substrate_rmsd_a": max_substrate_rmsd,
+        "substrate_pose_drift_a": max_pose_drift,
+        "zn_scissile_distance_delta_a": max_zn_delta,
+        "e96_scissile_distance_delta_a": max_e96_delta,
+        "h172_scissile_distance_delta_a": max_h172_delta,
+        "minimum_contact_retention_fraction": retention,
+    }
+    incomplete = (
+        not baseline.geometry_complete
+        or any(not geometry.geometry_complete for geometry in geometries)
+        or any(value is None or not np.isfinite(value) for value in observed.values())
+    )
+    if incomplete:
+        classification = "indeterminate"
+        warnings = (
+            "Candidate baseline or a perturbed pose lacks complete catalytic/contact "
+            "geometry; local robustness cannot be adjudicated.",
+        )
+    else:
+        exceeded = [
+            name
+            for name in _THRESHOLDS
+            if float(observed[name]) > _CANDIDATE_RELATIVE_THRESHOLDS[name]
+        ]
+        if float(retention) < _CANDIDATE_RELATIVE_THRESHOLDS[
+            "minimum_contact_retention_fraction"
+        ]:
+            exceeded.append("minimum_contact_retention_fraction")
+        if exceeded:
+            classification = "pose-sensitive"
+            warnings = (
+                "Local perturbations exceed the unchanged geometry threshold(s) or "
+                "candidate-contact retention gate: "
+                + ", ".join(exceeded)
+                + ".",
+            )
+        else:
+            classification = "robust"
+            warnings = ()
+    return CandidatePoseRobustnessAssessment(
+        variant_id=identifier,
+        classification=classification,
+        samples=samples,
+        thresholds=dict(_CANDIDATE_RELATIVE_THRESHOLDS),
+        max_substrate_rmsd_a=max_substrate_rmsd,
+        max_substrate_pose_drift_a=max_pose_drift,
+        max_zn_scissile_distance_delta_a=max_zn_delta,
+        max_e96_scissile_distance_delta_a=max_e96_delta,
+        max_h172_scissile_distance_delta_a=max_h172_delta,
+        minimum_contact_retention_fraction=retention,
+        baseline_contact_count=len(baseline_contacts),
         method=method,
         interpretation_limit=limit,
         warnings=warnings,

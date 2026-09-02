@@ -5,6 +5,7 @@ import pytest
 from Bio.PDB import PDBParser
 
 from atlas.late_stage.pose_robustness import (
+    assess_candidate_pose_robustness,
     assess_local_pose_robustness,
     generate_local_pose_perturbations,
 )
@@ -132,3 +133,60 @@ def test_missing_zinc_geometry_is_indeterminate(active_like: Path, tmp_path: Pat
 
     assert result.classification == "indeterminate"
     assert any("incomplete catalytic geometry" in warning for warning in result.warnings)
+
+
+def test_candidate_incremental_robustness_does_not_double_count_baseline_pose_offset(
+    active_like: Path, tmp_path: Path
+) -> None:
+    """Baseline structural drift is gated elsewhere and must not be counted twice."""
+    shifted = generate_local_pose_perturbations(
+        active_like,
+        tmp_path / "shifted_source",
+        variant_id="shifted",
+        translation_distance_a=0.30,
+        rotation_degrees=0.0,
+    )[1].path
+
+    absolute = assess_local_pose_robustness(
+        shifted,
+        reference_pdb=active_like,
+        output_dir=tmp_path / "absolute",
+        variant_id="absolute",
+    )
+    incremental = assess_candidate_pose_robustness(
+        shifted,
+        active_reference_pdb=active_like,
+        output_dir=tmp_path / "incremental",
+        variant_id="incremental",
+    )
+
+    assert absolute.classification == "pose-sensitive"
+    assert incremental.classification == "robust"
+    assert incremental.minimum_contact_retention_fraction is not None
+    assert incremental.minimum_contact_retention_fraction >= incremental.thresholds[
+        "minimum_contact_retention_fraction"
+    ]
+    assert incremental.max_substrate_pose_drift_a is not None
+    assert incremental.max_substrate_pose_drift_a <= incremental.thresholds[
+        "substrate_pose_drift_a"
+    ]
+    assert "candidate baseline" in incremental.method
+
+
+def test_candidate_incremental_robustness_rejects_large_local_perturbation(
+    active_like: Path, tmp_path: Path
+) -> None:
+    """The candidate-relative correction must not weaken the existing displacement gate."""
+    result = assess_candidate_pose_robustness(
+        active_like,
+        active_reference_pdb=active_like,
+        output_dir=tmp_path / "large_incremental",
+        variant_id="large-incremental",
+        translation_distance_a=1.5,
+    )
+
+    assert result.classification == "pose-sensitive"
+    assert result.max_substrate_pose_drift_a is not None
+    assert result.max_substrate_pose_drift_a > result.thresholds[
+        "substrate_pose_drift_a"
+    ]

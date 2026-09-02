@@ -20,8 +20,11 @@ from atlas.dynamics.models import (
 
 
 FORCE_FIELDS = ("amber14-all.xml", "amber14/tip3pfb.xml")
-DYNAMICS_PROTOCOL = "atlas-explicit-md-v2-staged-timestep"
+DYNAMICS_PROTOCOL = "atlas-explicit-md-v4-solvent-relaxation"
+DYNAMICS_ARTIFACT_TAG = "v4"
 EQUILIBRATION_TIMESTEP_FS = 0.5
+SOLVENT_RELAXATION_POSITION_RESTRAINT_KJ_MOL_NM2 = 1_000.0
+SOLVENT_RELAXATION_STEPS = 5_000
 CLAIM_BOUNDARY = (
     "Structural/dynamic simulation with explicit solvent and documented Zn restraints; "
     "does not simulate catalytic turnover or predict kcat/Km."
@@ -115,6 +118,13 @@ def _replica_context_hash(preparation_context_hash: str, config: ExplicitMDConfi
         "dynamics_protocol": DYNAMICS_PROTOCOL,
         "equilibration_timestep_fs": _equilibration_timestep_fs(config),
         "equilibration_plan": build_equilibration_plan(config),
+        "solvent_relaxation": {
+            "solute_position_restraint_kj_mol_nm2": (
+                SOLVENT_RELAXATION_POSITION_RESTRAINT_KJ_MOL_NM2
+            ),
+            "steps": SOLVENT_RELAXATION_STEPS,
+            "timestep_fs": _equilibration_timestep_fs(config),
+        },
     }
     return hashlib.sha256(
         json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
@@ -174,7 +184,18 @@ def _add_zinc_restraints(openmm, unit, system, topology, positions, force_consta
         ("B", 38, "O"),
     )
     force = openmm.HarmonicBondForce()
+    nonbonded = next(
+        (
+            candidate
+            for candidate in system.getForces()
+            if isinstance(candidate, openmm.NonbondedForce)
+        ),
+        None,
+    )
+    if nonbonded is None:
+        raise RuntimeError("Bonded Zn model requires an OpenMM NonbondedForce")
     targets: dict[str, float] = {}
+    exclusions: list[str] = []
     zinc_position = positions[zinc]
     for chain, residue, atom_name in target_keys:
         index = _topology_index(topology, chain, residue, atom_name)
@@ -188,10 +209,20 @@ def _add_zinc_restraints(openmm, unit, system, topology, positions, force_consta
             * unit.kilojoule_per_mole
             / unit.nanometer**2,
         )
-        targets[f"{chain}:{residue}:{atom_name}"] = distance_nm * 10.0
+        label = f"{chain}:{residue}:{atom_name}"
+        targets[label] = distance_nm * 10.0
+        nonbonded.addException(
+            zinc,
+            index,
+            0.0 * unit.elementary_charge**2,
+            1.0 * unit.nanometer,
+            0.0 * unit.kilojoule_per_mole,
+            replace=True,
+        )
+        exclusions.append(label)
     force.setForceGroup(21)
     system.addForce(force)
-    return targets
+    return targets, exclusions
 
 
 def prepare_explicit_system(
@@ -287,7 +318,7 @@ def prepare_explicit_system(
     _add_position_restraints(
         openmm, unit, system, topology, positions, solute_atom_count
     )
-    zinc_targets = _add_zinc_restraints(
+    zinc_targets, zinc_exclusions = _add_zinc_restraints(
         openmm,
         unit,
         system,
@@ -296,9 +327,15 @@ def prepare_explicit_system(
         config.zinc_restraint_k_kj_mol_nm2,
     )
     metadata = json.loads(metadata_json.read_text())
-    if metadata.get("zinc_restraint_targets_a") != zinc_targets:
+    if (
+        metadata.get("zinc_restraint_targets_a") != zinc_targets
+        or metadata.get("zinc_coordination_model") != "bonded harmonic restraint"
+        or metadata.get("zinc_ligand_nonbonded_exclusions") != zinc_exclusions
+    ):
         metadata["zinc_restraint_targets_a"] = zinc_targets
         metadata["zinc_restraint_k_kj_mol_nm2"] = config.zinc_restraint_k_kj_mol_nm2
+        metadata["zinc_coordination_model"] = "bonded harmonic restraint"
+        metadata["zinc_ligand_nonbonded_exclusions"] = zinc_exclusions
         metadata["position_restraint_schedule_kj_mol_nm2"] = list(
             config.position_restraint_schedule_kj_mol_nm2
         )
@@ -469,7 +506,7 @@ def _completed_result(directory: Path, replica_id: int, seed: int) -> ReplicaRes
         status="completed",
         output_dir=directory,
         trajectory_path=directory / "trajectory.dcd",
-        checkpoint_path=directory / "checkpoint.chk",
+        checkpoint_path=directory / f"checkpoint-{DYNAMICS_ARTIFACT_TAG}.chk",
         metrics_csv=directory / "metrics.csv",
         final_pdb=directory / "final.pdb",
         summary_json=summary,
@@ -491,8 +528,8 @@ def run_explicit_md_replica(
     completed = _completed_result(directory, replica_id, seed)
     if completed is not None:
         return completed
-    checkpoint = directory / "checkpoint.chk"
-    progress_path = directory / "progress.json"
+    checkpoint = directory / f"checkpoint-{DYNAMICS_ARTIFACT_TAG}.chk"
+    progress_path = directory / f"progress-{DYNAMICS_ARTIFACT_TAG}.json"
     trajectory = directory / "trajectory.dcd"
     metrics_path = directory / "metrics.csv"
     coordinates_path = directory / "analysis_coordinates.npz"
@@ -535,6 +572,7 @@ def run_explicit_md_replica(
         else:
             progress = {
                 "context_hash": replica_context_hash,
+                "solvent_relaxation_steps_completed": 0,
                 "phase": "equilibration",
                 "equilibration_segment": 0,
                 "equilibration_steps_completed": 0,
@@ -547,6 +585,16 @@ def run_explicit_md_replica(
                 / unit.nanometer,
                 maxIterations=config.minimization_max_iterations,
             )
+            simulation.context.setParameter(
+                "k_position",
+                SOLVENT_RELAXATION_POSITION_RESTRAINT_KJ_MOL_NM2
+                * unit.kilojoule_per_mole
+                / unit.nanometer**2,
+            )
+            simulation.step(SOLVENT_RELAXATION_STEPS)
+            progress["solvent_relaxation_steps_completed"] = SOLVENT_RELAXATION_STEPS
+            simulation.saveCheckpoint(str(checkpoint))
+            _write_json(progress_path, progress)
             simulation.context.setVelocitiesToTemperature(
                 config.temperature_k * unit.kelvin, seed
             )
@@ -671,6 +719,13 @@ def run_explicit_md_replica(
             "equilibration_nominal_steps": config.equilibration_steps,
             "equilibration_executed_steps": sum(
                 steps for _, steps in equilibration_plan
+            ),
+            "solvent_relaxation_position_restraint_kj_mol_nm2": (
+                SOLVENT_RELAXATION_POSITION_RESTRAINT_KJ_MOL_NM2
+            ),
+            "solvent_relaxation_steps": SOLVENT_RELAXATION_STEPS,
+            "solvent_relaxation_time_ps": (
+                SOLVENT_RELAXATION_STEPS * _equilibration_timestep_fs(config) / 1_000.0
             ),
             "equilibration_timestep_fs": _equilibration_timestep_fs(config),
             "equilibration_time_ps": (

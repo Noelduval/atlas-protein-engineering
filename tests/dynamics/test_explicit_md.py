@@ -68,6 +68,14 @@ def test_explicit_preparation_adds_solvent_and_tracks_fragment_termination(
     assert prepared.water_residue_count > 0
     assert metadata["modeled_fragment_terminal_atoms"] == ["A:215:OXT", "B:41:OXT"]
     assert metadata["force_fields"] == ["amber14-all.xml", "amber14/tip3pfb.xml"]
+    assert metadata["zinc_coordination_model"] == "bonded harmonic restraint"
+    assert metadata["zinc_ligand_nonbonded_exclusions"] == [
+        "A:95:NE2",
+        "A:99:NE2",
+        "A:122:OE1",
+        "A:122:OE2",
+        "B:38:O",
+    ]
     assert metadata["claim_boundary"].startswith("Structural/dynamic simulation")
 
 
