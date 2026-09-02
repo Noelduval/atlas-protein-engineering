@@ -58,3 +58,37 @@ def test_finalist_gate_preserves_baseline_order_and_caps_portfolio_without_score
     assert selected == tuple(f"ATLAS-{index}" for index in range(6, 1, -1))
     assert len(selected) == 5
     assert all(item["universal_score_used"] is False for item in decisions.values())
+
+
+def test_pose_robustness_is_diagnostic_and_developability_warnings_are_soft() -> None:
+    record = _record(
+        "ATLAS-SOFT",
+        pose_robustness={"status": "available", "classification": "indeterminate"},
+        developability={
+            "status": "available",
+            "classification": "review_required",
+            "warnings": ["hydrophobic_sequence_patch"],
+        },
+    )
+    selected, decisions = select_late_stage_finalists(
+        (record,), baseline_order=("ATLAS-SOFT",), target=5
+    )
+    assert selected == ("ATLAS-SOFT",)
+    assert decisions["ATLAS-SOFT"]["eligible"] is True
+
+
+def test_candidate_introduced_developability_blocker_still_rejects() -> None:
+    record = _record(
+        "ATLAS-BLOCKED",
+        developability={
+            "status": "available",
+            "classification": "review_required",
+            "candidate_introduced_hard_blocker": True,
+        },
+    )
+    selected, decisions = select_late_stage_finalists(
+        (record,), baseline_order=("ATLAS-BLOCKED",), target=5
+    )
+    assert selected == ()
+    assert decisions["ATLAS-BLOCKED"]["eligible"] is False
+    assert "candidate-introduced hard blocker" in decisions["ATLAS-BLOCKED"]["blockers"][0]

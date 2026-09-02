@@ -28,8 +28,6 @@ from atlas.late_stage.structure_validation import validate_structure_prediction
 
 _REQUIRED_LOCAL = (
     ("specificity", "intended_preferred"),
-    ("pose_robustness", "robust"),
-    ("developability", "acceptable_with_flags"),
 )
 
 _PROTOCOL = "atlas-v1-late-stage-evidence-v1"
@@ -141,6 +139,9 @@ def select_late_stage_finalists(
                 blockers.append(
                     f"{axis.replace('_', ' ')} classification is {classification}"
                 )
+        developability = record.get("developability", {})
+        if bool(developability.get("candidate_introduced_hard_blocker", False)):
+            blockers.append("developability has a candidate-introduced hard blocker")
         orthogonal = record.get("orthogonal_structure", {})
         decisions[candidate_id] = {
             "eligible": not blockers,
