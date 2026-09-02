@@ -1,0 +1,32 @@
+{
+  "base_run_context": {
+    "atlas_commit": "aa5f61d8a5fbaffb50e1c2fef3b6b3cc275f707c",
+    "dynamics_mode": "excluded-reference-validation-failed",
+    "input_sha256": "e8f61394df86c741694affb8b3067f4e17ac72245a37e7cdd9cf875dc9efe63a",
+    "schema_version": 1,
+    "thermompnn_commit": "2b04fd370e399911b1fa5848112cc9013f084110",
+    "thermompnn_d_commit": "df9a75aaddb674a7c4c193005031fc0536d325fb",
+    "validation_policy": "atlas-v1-fixed-gate-2026-08-19"
+  },
+  "candidate_budget": 5000,
+  "claim_boundary": "Prospective computational experiment prioritization; not proof of improved catalytic activity or therapeutic efficacy.",
+  "funnel_targets": {
+    "adversarial": 10,
+    "broad": 500,
+    "portfolio": 5,
+    "structure": 100
+  },
+  "generation_policy_version": "atlas-mechanism-aware-substitution-policy-v1",
+  "minimum_doubles": 750,
+  "minimum_structural_regions": 4,
+  "protocol": "atlas-adaptive-prospective-design-v2-md-excluded",
+  "repair_children_per_parent": 1,
+  "repair_generation_limit": 2,
+  "repair_parent_target": 6,
+  "replicated_explicit_md": {
+    "included_in_candidate_discrimination": false,
+    "reason": "DP622/A\u03b2/Zn reference failed reproducible numerical and geometry validation."
+  },
+  "round1_target": 1200,
+  "seed": 622
+}

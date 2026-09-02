@@ -1,0 +1,41 @@
+{
+  "counts_by_double_category": {
+    "FUNCTION_STABILITY_RESCUE_DOUBLE": 912,
+    "LOCAL_COUPLED_DOUBLE": 1368,
+    "ORTHOGONAL_MECHANISM_DOUBLE": 689
+  },
+  "counts_by_region": {
+    "cross_region": 1957,
+    "distal_stability": 864,
+    "scaffold_surface": 729,
+    "second_shell": 952,
+    "substrate_interface": 498
+  },
+  "counts_by_round": {
+    "1": 1200,
+    "2": 831,
+    "3": 2969
+  },
+  "counts_by_strategy": {
+    "conservative_explorer": 518,
+    "evidence_guided_combination_explorer": 2969,
+    "second_shell_preorganization_explorer": 618,
+    "stability_support_explorer": 559,
+    "substrate_interface_explorer": 336
+  },
+  "counts_by_substitution_class": {
+    "charge_balance": 30,
+    "conservative": 2379,
+    "experimentally_informed": 16,
+    "helix_propensity": 378,
+    "hydrogen_bond": 332,
+    "hydrophobic_tuning": 689,
+    "packing": 1623,
+    "preorganization": 1043,
+    "solubility": 710,
+    "surface_charge": 769
+  },
+  "known_retrospective_construct_excluded": "Y91F/D126A",
+  "policy_version": "atlas-mechanism-aware-substitution-policy-v1",
+  "unique_legal_candidates": 5000
+}

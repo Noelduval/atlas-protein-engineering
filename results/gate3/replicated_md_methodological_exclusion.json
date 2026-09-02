@@ -1,0 +1,6 @@
+{
+  "candidate_penalty_when_missing": false,
+  "included_in_candidate_discrimination": false,
+  "reference_validation": "FAILED",
+  "statement": "Replicated explicit-solvent MD was evaluated as a prospective evidence layer but excluded from Atlas candidate discrimination after the DP622/A\u03b2/Zn reference failed reproducible numerical and catalytic/substrate-geometry validation."
+}

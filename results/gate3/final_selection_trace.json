@@ -1,0 +1,649 @@
+{
+  "adversarial_reviews": [
+    {
+      "blind_rank_order": true,
+      "candidate_id": "ATLAS-0215A1AE2C58FD57",
+      "critic_rationale": "Independent evidence supports promotion to the next funnel stage.",
+      "decision": "PROMOTE",
+      "double_category": "FUNCTION_STABILITY_RESCUE_DOUBLE",
+      "epistasis_uncertainty": "high",
+      "evidence": {
+        "catalytic_geometry": {
+          "method": "catalytic_preorganization maximum grounded-distance deviation",
+          "uncertainty": 0.35,
+          "value": 1.153489351272583
+        },
+        "liability": {
+          "method": "explicit sequence/structural liability rules",
+          "uncertainty": 0.2,
+          "value": 0.0
+        },
+        "stability": {
+          "method": "ThermoMPNN-D epistatic targeted",
+          "uncertainty": 0.75,
+          "value": -1.4997351169586182
+        },
+        "stability_model_aware": {
+          "method": "within-model empirical rank: ThermoMPNN-D epistatic targeted",
+          "uncertainty": 0.018352485989660192,
+          "value": 0.011455525606469003
+        },
+        "structure_quality": {
+          "method": "restrained mutant-complex active-site RMSD",
+          "uncertainty": 0.35,
+          "value": 0.5049040580811699
+        },
+        "substrate_interface": {
+          "method": "restrained A\u03b2 pose-preservation support",
+          "uncertainty": 0.35,
+          "value": 0.5468958522174238
+        }
+      },
+      "falsification_result": "Failure to express/fold, loss of A\u03b2 cleavage relative to reference, or loss of the hypothesized structural behavior falsifies the design hypothesis.",
+      "known_experiment_conflict": "none_identified",
+      "mutation_set": "G65M/Q153M",
+      "parent_child_structural_evidence": [
+        {
+          "parent_id": "ATLAS-7BD6CFB52D8C4EE6",
+          "parent_mutation_set": "Q153M",
+          "raw_stability_arithmetic_performed": false,
+          "structural_axis_deltas_child_minus_parent": {
+            "catalytic_geometry": -0.06771373748779297,
+            "structure_quality": -0.02173641848329677,
+            "substrate_interface": 0.00011072691767766152
+          }
+        },
+        {
+          "parent_id": "ATLAS-BD6DC55397A85E01",
+          "parent_mutation_set": "G65M",
+          "raw_stability_arithmetic_performed": false,
+          "structural_axis_deltas_child_minus_parent": {
+            "catalytic_geometry": -0.07889509201049805,
+            "structure_quality": -0.30600462137001294,
+            "substrate_interface": -0.004202159009545681
+          }
+        }
+      ],
+      "physical_coupling": "function-oriented mutation paired with a distal/scaffold-support hypothesis",
+      "promotion_blocker": "No policy-level repairable weakness identified.",
+      "repair_chain": [],
+      "repair_exhausted": false,
+      "repair_exhaustion_reason": null,
+      "starting_candidate_id": "ATLAS-0215A1AE2C58FD57",
+      "strongest_case_against_synthesis": "No computational axis demonstrates catalytic turnover; the historical benchmark shows stability/static geometry can disagree with activity.",
+      "strongest_case_for_synthesis": "The candidate preserves multiple independent computational-support axes and represents a falsifiable experiment.",
+      "unresolved_uncertainty": "stability: uncertainty=0.75"
+    },
+    {
+      "blind_rank_order": true,
+      "candidate_id": "ATLAS-1FB316267B702519",
+      "critic_rationale": "Independent evidence supports promotion to the next funnel stage.",
+      "decision": "PROMOTE",
+      "double_category": "ORTHOGONAL_MECHANISM_DOUBLE",
+      "epistasis_uncertainty": "high",
+      "evidence": {
+        "catalytic_geometry": {
+          "method": "catalytic_preorganization maximum grounded-distance deviation",
+          "uncertainty": 0.35,
+          "value": 1.2028629779815674
+        },
+        "liability": {
+          "method": "explicit sequence/structural liability rules",
+          "uncertainty": 0.2,
+          "value": 0.4
+        },
+        "stability": {
+          "method": "ThermoMPNN-D epistatic targeted",
+          "uncertainty": 0.75,
+          "value": -1.840215921401977
+        },
+        "stability_model_aware": {
+          "method": "within-model empirical rank: ThermoMPNN-D epistatic targeted",
+          "uncertainty": 0.018352485989660192,
+          "value": 0.0023584905660377358
+        },
+        "structure_quality": {
+          "method": "restrained mutant-complex active-site RMSD",
+          "uncertainty": 0.35,
+          "value": 0.5369165404494753
+        },
+        "substrate_interface": {
+          "method": "restrained A\u03b2 pose-preservation support",
+          "uncertainty": 0.35,
+          "value": 0.5488657196676868
+        }
+      },
+      "falsification_result": "Failure to express/fold, loss of A\u03b2 cleavage relative to reference, or loss of the hypothesized structural behavior falsifies the design hypothesis.",
+      "known_experiment_conflict": "none_identified",
+      "mutation_set": "A16C/Q153C",
+      "parent_child_structural_evidence": [
+        {
+          "parent_id": "ATLAS-9825E5BB58A70D73",
+          "parent_mutation_set": "Q153C",
+          "raw_stability_arithmetic_performed": false,
+          "structural_axis_deltas_child_minus_parent": {
+            "catalytic_geometry": -0.02691030502319336,
+            "structure_quality": 0.03896454931204196,
+            "substrate_interface": 0.00216998105889199
+          }
+        },
+        {
+          "parent_id": "ATLAS-79A742AC71DBD6DE",
+          "parent_mutation_set": "A16C",
+          "raw_stability_arithmetic_performed": false,
+          "structural_axis_deltas_child_minus_parent": {
+            "catalytic_geometry": -0.02096724510192871,
+            "structure_quality": 0.03005960791714013,
+            "substrate_interface": 0.0030269006160258405
+          }
+        }
+      ],
+      "physical_coupling": "spatially separated positions with distinct structural-region mechanisms",
+      "promotion_blocker": "No policy-level repairable weakness identified.",
+      "repair_chain": [],
+      "repair_exhausted": false,
+      "repair_exhaustion_reason": null,
+      "starting_candidate_id": "ATLAS-1FB316267B702519",
+      "strongest_case_against_synthesis": "No computational axis demonstrates catalytic turnover; the historical benchmark shows stability/static geometry can disagree with activity.",
+      "strongest_case_for_synthesis": "The candidate preserves multiple independent computational-support axes and represents a falsifiable experiment.",
+      "unresolved_uncertainty": "stability: uncertainty=0.75"
+    },
+    {
+      "blind_rank_order": true,
+      "candidate_id": "ATLAS-2EB17A2E3DB7062E",
+      "critic_rationale": "Independent evidence supports promotion to the next funnel stage.",
+      "decision": "PROMOTE",
+      "double_category": null,
+      "epistasis_uncertainty": null,
+      "evidence": {
+        "catalytic_geometry": {
+          "method": "catalytic_preorganization maximum grounded-distance deviation",
+          "uncertainty": 0.35,
+          "value": 1.2102186679840088
+        },
+        "liability": {
+          "method": "explicit sequence/structural liability rules",
+          "uncertainty": 0.2,
+          "value": 0.0
+        },
+        "stability": {
+          "method": "ThermoMPNN",
+          "uncertainty": 0.5,
+          "value": -0.5006449222564697
+        },
+        "stability_model_aware": {
+          "method": "within-model empirical rank: ThermoMPNN",
+          "uncertainty": 0.022189373390928115,
+          "value": 0.022167487684729065
+        },
+        "structure_quality": {
+          "method": "restrained mutant-complex active-site RMSD",
+          "uncertainty": 0.35,
+          "value": 0.4944082595506807
+        },
+        "substrate_interface": {
+          "method": "restrained A\u03b2 pose-preservation support",
+          "uncertainty": 0.35,
+          "value": 0.5555538289969387
+        }
+      },
+      "falsification_result": "Failure to express/fold, loss of A\u03b2 cleavage relative to reference, or loss of the hypothesized structural behavior falsifies the design hypothesis.",
+      "known_experiment_conflict": "none_identified",
+      "mutation_set": "A130L",
+      "parent_child_structural_evidence": [],
+      "physical_coupling": null,
+      "promotion_blocker": "No policy-level repairable weakness identified.",
+      "repair_chain": [],
+      "repair_exhausted": false,
+      "repair_exhaustion_reason": null,
+      "starting_candidate_id": "ATLAS-2EB17A2E3DB7062E",
+      "strongest_case_against_synthesis": "No computational axis demonstrates catalytic turnover; the historical benchmark shows stability/static geometry can disagree with activity.",
+      "strongest_case_for_synthesis": "The candidate preserves multiple independent computational-support axes and represents a falsifiable experiment.",
+      "unresolved_uncertainty": "stability: uncertainty=0.5"
+    },
+    {
+      "blind_rank_order": true,
+      "candidate_id": "ATLAS-39F921440EC002E5",
+      "critic_rationale": "Independent evidence supports promotion to the next funnel stage.",
+      "decision": "PROMOTE",
+      "double_category": null,
+      "epistasis_uncertainty": null,
+      "evidence": {
+        "catalytic_geometry": {
+          "method": "catalytic_preorganization maximum grounded-distance deviation",
+          "uncertainty": 0.35,
+          "value": 1.2164032459259033
+        },
+        "liability": {
+          "method": "explicit sequence/structural liability rules",
+          "uncertainty": 0.2,
+          "value": 0.1
+        },
+        "stability": {
+          "method": "ThermoMPNN",
+          "uncertainty": 0.5,
+          "value": -1.0896849632263184
+        },
+        "stability_model_aware": {
+          "method": "within-model empirical rank: ThermoMPNN",
+          "uncertainty": 0.022189373390928115,
+          "value": 0.001477832512315271
+        },
+        "structure_quality": {
+          "method": "restrained mutant-complex active-site RMSD",
+          "uncertainty": 0.35,
+          "value": 0.5263701442601348
+        },
+        "substrate_interface": {
+          "method": "restrained A\u03b2 pose-preservation support",
+          "uncertainty": 0.35,
+          "value": 0.556546136567902
+        }
+      },
+      "falsification_result": "Failure to express/fold, loss of A\u03b2 cleavage relative to reference, or loss of the hypothesized structural behavior falsifies the design hypothesis.",
+      "known_experiment_conflict": "none_identified",
+      "mutation_set": "E104V",
+      "parent_child_structural_evidence": [],
+      "physical_coupling": null,
+      "promotion_blocker": "No policy-level repairable weakness identified.",
+      "repair_chain": [],
+      "repair_exhausted": false,
+      "repair_exhaustion_reason": null,
+      "starting_candidate_id": "ATLAS-39F921440EC002E5",
+      "strongest_case_against_synthesis": "No computational axis demonstrates catalytic turnover; the historical benchmark shows stability/static geometry can disagree with activity.",
+      "strongest_case_for_synthesis": "The candidate preserves multiple independent computational-support axes and represents a falsifiable experiment.",
+      "unresolved_uncertainty": "stability: uncertainty=0.5"
+    },
+    {
+      "blind_rank_order": true,
+      "candidate_id": "ATLAS-66C6BB6CAA1C310A",
+      "critic_rationale": "Independent evidence supports promotion to the next funnel stage.",
+      "decision": "PROMOTE",
+      "double_category": null,
+      "epistasis_uncertainty": null,
+      "evidence": {
+        "catalytic_geometry": {
+          "method": "catalytic_preorganization maximum grounded-distance deviation",
+          "uncertainty": 0.35,
+          "value": 1.2288050651550293
+        },
+        "liability": {
+          "method": "explicit sequence/structural liability rules",
+          "uncertainty": 0.2,
+          "value": 0.0
+        },
+        "stability": {
+          "method": "ThermoMPNN",
+          "uncertainty": 0.5,
+          "value": -0.4897493720054626
+        },
+        "stability_model_aware": {
+          "method": "within-model empirical rank: ThermoMPNN",
+          "uncertainty": 0.022189373390928115,
+          "value": 0.02315270935960591
+        },
+        "structure_quality": {
+          "method": "restrained mutant-complex active-site RMSD",
+          "uncertainty": 0.35,
+          "value": 0.5107449595535423
+        },
+        "substrate_interface": {
+          "method": "restrained A\u03b2 pose-preservation support",
+          "uncertainty": 0.35,
+          "value": 0.61053955282702
+        }
+      },
+      "falsification_result": "Failure to express/fold, loss of A\u03b2 cleavage relative to reference, or loss of the hypothesized structural behavior falsifies the design hypothesis.",
+      "known_experiment_conflict": "none_identified",
+      "mutation_set": "A37Y",
+      "parent_child_structural_evidence": [],
+      "physical_coupling": null,
+      "promotion_blocker": "No policy-level repairable weakness identified.",
+      "repair_chain": [],
+      "repair_exhausted": false,
+      "repair_exhaustion_reason": null,
+      "starting_candidate_id": "ATLAS-66C6BB6CAA1C310A",
+      "strongest_case_against_synthesis": "No computational axis demonstrates catalytic turnover; the historical benchmark shows stability/static geometry can disagree with activity.",
+      "strongest_case_for_synthesis": "The candidate preserves multiple independent computational-support axes and represents a falsifiable experiment.",
+      "unresolved_uncertainty": "stability: uncertainty=0.5"
+    },
+    {
+      "blind_rank_order": true,
+      "candidate_id": "ATLAS-2E228B9A8C3506C3",
+      "critic_rationale": "Independent evidence supports promotion to the next funnel stage.",
+      "decision": "PROMOTE",
+      "double_category": "FUNCTION_STABILITY_RESCUE_DOUBLE",
+      "epistasis_uncertainty": "high",
+      "evidence": {
+        "catalytic_geometry": {
+          "method": "catalytic_preorganization maximum grounded-distance deviation",
+          "uncertainty": 0.35,
+          "value": 1.049086332321167
+        },
+        "liability": {
+          "method": "explicit sequence/structural liability rules",
+          "uncertainty": 0.2,
+          "value": 0.25
+        },
+        "stability": {
+          "method": "ThermoMPNN-D epistatic targeted",
+          "uncertainty": 0.75,
+          "value": -1.5035027265548706
+        },
+        "stability_model_aware": {
+          "method": "within-model empirical rank: ThermoMPNN-D epistatic targeted",
+          "uncertainty": 0.018352485989660192,
+          "value": 0.011118598382749326
+        },
+        "structure_quality": {
+          "method": "restrained mutant-complex active-site RMSD",
+          "uncertainty": 0.35,
+          "value": 0.4652113602260784
+        },
+        "substrate_interface": {
+          "method": "restrained A\u03b2 pose-preservation support",
+          "uncertainty": 0.35,
+          "value": 0.570848380761044
+        }
+      },
+      "falsification_result": "Failure to express/fold, loss of A\u03b2 cleavage relative to reference, or loss of the hypothesized structural behavior falsifies the design hypothesis.",
+      "known_experiment_conflict": "none_identified",
+      "mutation_set": "R42L/Q153I",
+      "parent_child_structural_evidence": [
+        {
+          "parent_id": "ATLAS-C764280590401A4B",
+          "parent_mutation_set": "Q153I",
+          "raw_stability_arithmetic_performed": false,
+          "structural_axis_deltas_child_minus_parent": {
+            "catalytic_geometry": -0.14722061157226562,
+            "structure_quality": -0.042641744869459985,
+            "substrate_interface": 0.013974707989102497
+          }
+        },
+        {
+          "parent_id": "ATLAS-E22C491AEAE5815C",
+          "parent_mutation_set": "R42L",
+          "raw_stability_arithmetic_performed": false,
+          "structural_axis_deltas_child_minus_parent": {
+            "catalytic_geometry": -0.18584632873535156,
+            "structure_quality": -0.07565350938180654,
+            "substrate_interface": 0.00998298445320367
+          }
+        }
+      ],
+      "physical_coupling": "function-oriented mutation paired with a distal/scaffold-support hypothesis",
+      "promotion_blocker": "No policy-level repairable weakness identified.",
+      "repair_chain": [],
+      "repair_exhausted": false,
+      "repair_exhaustion_reason": null,
+      "starting_candidate_id": "ATLAS-2E228B9A8C3506C3",
+      "strongest_case_against_synthesis": "No computational axis demonstrates catalytic turnover; the historical benchmark shows stability/static geometry can disagree with activity.",
+      "strongest_case_for_synthesis": "The candidate preserves multiple independent computational-support axes and represents a falsifiable experiment.",
+      "unresolved_uncertainty": "stability: uncertainty=0.75"
+    },
+    {
+      "blind_rank_order": true,
+      "candidate_id": "ATLAS-72AEF56AEC1261E2",
+      "critic_rationale": "Independent evidence supports promotion to the next funnel stage.",
+      "decision": "PROMOTE",
+      "double_category": "ORTHOGONAL_MECHANISM_DOUBLE",
+      "epistasis_uncertainty": "high",
+      "evidence": {
+        "catalytic_geometry": {
+          "method": "catalytic_preorganization maximum grounded-distance deviation",
+          "uncertainty": 0.35,
+          "value": 1.2167408466339111
+        },
+        "liability": {
+          "method": "explicit sequence/structural liability rules",
+          "uncertainty": 0.2,
+          "value": 0.4
+        },
+        "stability": {
+          "method": "ThermoMPNN-D epistatic targeted",
+          "uncertainty": 0.75,
+          "value": -1.5194718837738037
+        },
+        "stability_model_aware": {
+          "method": "within-model empirical rank: ThermoMPNN-D epistatic targeted",
+          "uncertainty": 0.018352485989660192,
+          "value": 0.00977088948787062
+        },
+        "structure_quality": {
+          "method": "restrained mutant-complex active-site RMSD",
+          "uncertainty": 0.35,
+          "value": 0.4932536604829547
+        },
+        "substrate_interface": {
+          "method": "restrained A\u03b2 pose-preservation support",
+          "uncertainty": 0.35,
+          "value": 0.5583531149766943
+        }
+      },
+      "falsification_result": "Failure to express/fold, loss of A\u03b2 cleavage relative to reference, or loss of the hypothesized structural behavior falsifies the design hypothesis.",
+      "known_experiment_conflict": "none_identified",
+      "mutation_set": "Q153C/T186C",
+      "parent_child_structural_evidence": [
+        {
+          "parent_id": "ATLAS-D49813447E2B0C52",
+          "parent_mutation_set": "T186C",
+          "raw_stability_arithmetic_performed": false,
+          "structural_axis_deltas_child_minus_parent": {
+            "catalytic_geometry": -0.013727188110351562,
+            "structure_quality": -0.0023993403270555214,
+            "substrate_interface": 0.008863246405289016
+          }
+        },
+        {
+          "parent_id": "ATLAS-9825E5BB58A70D73",
+          "parent_mutation_set": "Q153C",
+          "raw_stability_arithmetic_performed": false,
+          "structural_axis_deltas_child_minus_parent": {
+            "catalytic_geometry": -0.01303243637084961,
+            "structure_quality": -0.004698330654478666,
+            "substrate_interface": 0.01165737636789943
+          }
+        }
+      ],
+      "physical_coupling": "spatially separated positions with distinct structural-region mechanisms",
+      "promotion_blocker": "No policy-level repairable weakness identified.",
+      "repair_chain": [],
+      "repair_exhausted": false,
+      "repair_exhaustion_reason": null,
+      "starting_candidate_id": "ATLAS-72AEF56AEC1261E2",
+      "strongest_case_against_synthesis": "No computational axis demonstrates catalytic turnover; the historical benchmark shows stability/static geometry can disagree with activity.",
+      "strongest_case_for_synthesis": "The candidate preserves multiple independent computational-support axes and represents a falsifiable experiment.",
+      "unresolved_uncertainty": "stability: uncertainty=0.75"
+    },
+    {
+      "blind_rank_order": true,
+      "candidate_id": "ATLAS-7D591F6B610561F5",
+      "critic_rationale": "Independent evidence supports promotion to the next funnel stage.",
+      "decision": "PROMOTE",
+      "double_category": null,
+      "epistasis_uncertainty": null,
+      "evidence": {
+        "catalytic_geometry": {
+          "method": "catalytic_preorganization maximum grounded-distance deviation",
+          "uncertainty": 0.35,
+          "value": 1.1949419975280762
+        },
+        "liability": {
+          "method": "explicit sequence/structural liability rules",
+          "uncertainty": 0.2,
+          "value": 0.1
+        },
+        "stability": {
+          "method": "ThermoMPNN",
+          "uncertainty": 0.5,
+          "value": -1.0114598274230957
+        },
+        "stability_model_aware": {
+          "method": "within-model empirical rank: ThermoMPNN",
+          "uncertainty": 0.022189373390928115,
+          "value": 0.0024630541871921183
+        },
+        "structure_quality": {
+          "method": "restrained mutant-complex active-site RMSD",
+          "uncertainty": 0.35,
+          "value": 0.49577570368085394
+        },
+        "substrate_interface": {
+          "method": "restrained A\u03b2 pose-preservation support",
+          "uncertainty": 0.35,
+          "value": 0.5543585799423928
+        }
+      },
+      "falsification_result": "Failure to express/fold, loss of A\u03b2 cleavage relative to reference, or loss of the hypothesized structural behavior falsifies the design hypothesis.",
+      "known_experiment_conflict": "none_identified",
+      "mutation_set": "E104I",
+      "parent_child_structural_evidence": [],
+      "physical_coupling": null,
+      "promotion_blocker": "No policy-level repairable weakness identified.",
+      "repair_chain": [],
+      "repair_exhausted": false,
+      "repair_exhaustion_reason": null,
+      "starting_candidate_id": "ATLAS-7D591F6B610561F5",
+      "strongest_case_against_synthesis": "No computational axis demonstrates catalytic turnover; the historical benchmark shows stability/static geometry can disagree with activity.",
+      "strongest_case_for_synthesis": "The candidate preserves multiple independent computational-support axes and represents a falsifiable experiment.",
+      "unresolved_uncertainty": "stability: uncertainty=0.5"
+    },
+    {
+      "blind_rank_order": true,
+      "candidate_id": "ATLAS-A05F510ADDB14ECB",
+      "critic_rationale": "Independent evidence supports promotion to the next funnel stage.",
+      "decision": "PROMOTE",
+      "double_category": null,
+      "epistasis_uncertainty": null,
+      "evidence": {
+        "catalytic_geometry": {
+          "method": "catalytic_preorganization maximum grounded-distance deviation",
+          "uncertainty": 0.35,
+          "value": 1.1279139518737793
+        },
+        "liability": {
+          "method": "explicit sequence/structural liability rules",
+          "uncertainty": 0.2,
+          "value": 0.0
+        },
+        "stability": {
+          "method": "ThermoMPNN",
+          "uncertainty": 0.5,
+          "value": -0.3828248381614685
+        },
+        "stability_model_aware": {
+          "method": "within-model empirical rank: ThermoMPNN",
+          "uncertainty": 0.022189373390928115,
+          "value": 0.03645320197044335
+        },
+        "structure_quality": {
+          "method": "restrained mutant-complex active-site RMSD",
+          "uncertainty": 0.35,
+          "value": 0.4810961893886357
+        },
+        "substrate_interface": {
+          "method": "restrained A\u03b2 pose-preservation support",
+          "uncertainty": 0.35,
+          "value": 0.6161750367067802
+        }
+      },
+      "falsification_result": "Failure to express/fold, loss of A\u03b2 cleavage relative to reference, or loss of the hypothesized structural behavior falsifies the design hypothesis.",
+      "known_experiment_conflict": "none_identified",
+      "mutation_set": "A37L",
+      "parent_child_structural_evidence": [],
+      "physical_coupling": null,
+      "promotion_blocker": "No policy-level repairable weakness identified.",
+      "repair_chain": [],
+      "repair_exhausted": false,
+      "repair_exhaustion_reason": null,
+      "starting_candidate_id": "ATLAS-A05F510ADDB14ECB",
+      "strongest_case_against_synthesis": "No computational axis demonstrates catalytic turnover; the historical benchmark shows stability/static geometry can disagree with activity.",
+      "strongest_case_for_synthesis": "The candidate preserves multiple independent computational-support axes and represents a falsifiable experiment.",
+      "unresolved_uncertainty": "stability: uncertainty=0.5"
+    },
+    {
+      "blind_rank_order": true,
+      "candidate_id": "ATLAS-2F6062983288B30D",
+      "critic_rationale": "Independent evidence supports promotion to the next funnel stage.",
+      "decision": "PROMOTE",
+      "double_category": "FUNCTION_STABILITY_RESCUE_DOUBLE",
+      "epistasis_uncertainty": "high",
+      "evidence": {
+        "catalytic_geometry": {
+          "method": "catalytic_preorganization maximum grounded-distance deviation",
+          "uncertainty": 0.35,
+          "value": 1.1976218223571777
+        },
+        "liability": {
+          "method": "explicit sequence/structural liability rules",
+          "uncertainty": 0.2,
+          "value": 0.0
+        },
+        "stability": {
+          "method": "ThermoMPNN-D epistatic targeted",
+          "uncertainty": 0.75,
+          "value": -1.3213024139404297
+        },
+        "stability_model_aware": {
+          "method": "within-model empirical rank: ThermoMPNN-D epistatic targeted",
+          "uncertainty": 0.018352485989660192,
+          "value": 0.018194070080862535
+        },
+        "structure_quality": {
+          "method": "restrained mutant-complex active-site RMSD",
+          "uncertainty": 0.35,
+          "value": 0.5029973543742184
+        },
+        "substrate_interface": {
+          "method": "restrained A\u03b2 pose-preservation support",
+          "uncertainty": 0.35,
+          "value": 0.5544896059352326
+        }
+      },
+      "falsification_result": "Failure to express/fold, loss of A\u03b2 cleavage relative to reference, or loss of the hypothesized structural behavior falsifies the design hypothesis.",
+      "known_experiment_conflict": "none_identified",
+      "mutation_set": "A37W/T186M",
+      "parent_child_structural_evidence": [
+        {
+          "parent_id": "ATLAS-C0AB6297A93E16ED",
+          "parent_mutation_set": "A37W",
+          "raw_stability_arithmetic_performed": false,
+          "structural_axis_deltas_child_minus_parent": {
+            "catalytic_geometry": -0.029208898544311523,
+            "structure_quality": 0.0034958132631540684,
+            "substrate_interface": 0.0072364118937993105
+          }
+        },
+        {
+          "parent_id": "ATLAS-12273B97EE10BB6E",
+          "parent_mutation_set": "T186M",
+          "raw_stability_arithmetic_performed": false,
+          "structural_axis_deltas_child_minus_parent": {
+            "catalytic_geometry": -0.020481109619140625,
+            "structure_quality": 1.1889073646353943e-05,
+            "substrate_interface": 0.011119593945167483
+          }
+        }
+      ],
+      "physical_coupling": "function-oriented mutation paired with a distal/scaffold-support hypothesis",
+      "promotion_blocker": "No policy-level repairable weakness identified.",
+      "repair_chain": [],
+      "repair_exhausted": false,
+      "repair_exhaustion_reason": null,
+      "starting_candidate_id": "ATLAS-2F6062983288B30D",
+      "strongest_case_against_synthesis": "No computational axis demonstrates catalytic turnover; the historical benchmark shows stability/static geometry can disagree with activity.",
+      "strongest_case_for_synthesis": "The candidate preserves multiple independent computational-support axes and represents a falsifiable experiment.",
+      "unresolved_uncertainty": "stability: uncertainty=0.75"
+    }
+  ],
+  "experimentally_untested": true,
+  "finalist_ids": [
+    "ATLAS-0215A1AE2C58FD57",
+    "ATLAS-1FB316267B702519",
+    "ATLAS-2EB17A2E3DB7062E",
+    "ATLAS-39F921440EC002E5",
+    "ATLAS-66C6BB6CAA1C310A"
+  ],
+  "portfolio_target": 5,
+  "universal_score": false
+}

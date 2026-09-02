@@ -1,0 +1,33 @@
+{
+  "blockers": [],
+  "candidate_budget": 5000,
+  "complete": true,
+  "eligible_unrepaired_near_misses": 0,
+  "finalists": 5,
+  "minimum_structural_regions": 4,
+  "near_misses_reported": 5,
+  "pending_candidates": 0,
+  "pending_checkpoints": 0,
+  "promotable_without_hard_relaxation": 0,
+  "required_strategies": [
+    "conservative_explorer",
+    "evidence_guided_combination_explorer",
+    "second_shell_preorganization_explorer",
+    "stability_support_explorer",
+    "substrate_interface_explorer"
+  ],
+  "strategies_used": [
+    "conservative_explorer",
+    "evidence_guided_combination_explorer",
+    "second_shell_preorganization_explorer",
+    "stability_support_explorer",
+    "substrate_interface_explorer"
+  ],
+  "structural_regions_explored": [
+    "distal_stability",
+    "scaffold_surface",
+    "second_shell",
+    "substrate_interface"
+  ],
+  "unique_legal_evaluated": 5000
+}

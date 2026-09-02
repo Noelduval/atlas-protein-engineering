@@ -1,0 +1,972 @@
+[
+  {
+    "axis": "stability",
+    "candidate_id": "ATLAS-2EB17A2E3DB7062E",
+    "method": "ThermoMPNN",
+    "payload": {
+      "activity_claim": false,
+      "direction": "lower predicted stability regression",
+      "interpretation": "Predicted stabilizing stability trend only; this is not a catalytic-activity prediction.",
+      "raw_predicted_ddg_or_score": -0.5006449222564697,
+      "warnings": ""
+    },
+    "provenance": {
+      "artifact_path": "/content/drive/MyDrive/Atlas/checkpoints/atlas-adaptive-t4-aa5f61d8a5fb-e8f61394/stability/round1/stability_evidence.csv",
+      "evidence_tier": "COMPUTATIONAL_SUPPORT",
+      "model_commit": "2b04fd370e399911b1fa5848112cc9013f084110",
+      "uncertainty_policy": "Fixed epistemic caution band, not a calibrated confidence interval; retrospective activity benchmark was not faithfully separated."
+    },
+    "status": "available",
+    "uncertainty": 0.5,
+    "value": -0.5006449222564697
+  },
+  {
+    "axis": "substrate_interface",
+    "candidate_id": "ATLAS-2EB17A2E3DB7062E",
+    "method": "23WN deposited-distance hypothesis prior",
+    "payload": {
+      "direction": "higher support",
+      "min_substrate_distance_a": 9.3111
+    },
+    "provenance": {
+      "applicability_caveat": "Deposited-coordinate hypothesis prior, not mutant activity.",
+      "evidence_tier": "COMPUTATIONAL_SUPPORT",
+      "model_label": "active_like_inferred"
+    },
+    "status": "available",
+    "uncertainty": 0.25,
+    "value": 0.3493791532446842
+  },
+  {
+    "axis": "catalytic_geometry",
+    "candidate_id": "ATLAS-2EB17A2E3DB7062E",
+    "method": "23WN catalytic-proximity perturbation risk",
+    "payload": {
+      "direction": "lower risk",
+      "min_zinc_distance_a": 11.7553
+    },
+    "provenance": {
+      "applicability_caveat": "Deposited-coordinate hypothesis prior, not mutant activity.",
+      "evidence_tier": "COMPUTATIONAL_SUPPORT",
+      "model_label": "active_like_inferred"
+    },
+    "status": "available",
+    "uncertainty": 0.35,
+    "value": 0.0
+  },
+  {
+    "axis": "liability",
+    "candidate_id": "ATLAS-2EB17A2E3DB7062E",
+    "method": "explicit sequence/structural liability rules",
+    "payload": {
+      "direction": "lower liability",
+      "reasons": []
+    },
+    "provenance": {
+      "applicability_caveat": "Deposited-coordinate hypothesis prior, not mutant activity.",
+      "evidence_tier": "COMPUTATIONAL_SUPPORT",
+      "model_label": "active_like_inferred"
+    },
+    "status": "available",
+    "uncertainty": 0.2,
+    "value": 0.0
+  },
+  {
+    "axis": "stability",
+    "candidate_id": "ATLAS-66C6BB6CAA1C310A",
+    "method": "ThermoMPNN",
+    "payload": {
+      "activity_claim": false,
+      "direction": "lower predicted stability regression",
+      "interpretation": "Predicted stabilizing stability trend only; this is not a catalytic-activity prediction.",
+      "raw_predicted_ddg_or_score": -0.4897493720054626,
+      "warnings": ""
+    },
+    "provenance": {
+      "artifact_path": "/content/drive/MyDrive/Atlas/checkpoints/atlas-adaptive-t4-aa5f61d8a5fb-e8f61394/stability/round2/stability_evidence.csv",
+      "evidence_tier": "COMPUTATIONAL_SUPPORT",
+      "model_commit": "2b04fd370e399911b1fa5848112cc9013f084110",
+      "uncertainty_policy": "Fixed epistemic caution band, not a calibrated confidence interval; retrospective activity benchmark was not faithfully separated."
+    },
+    "status": "available",
+    "uncertainty": 0.5,
+    "value": -0.4897493720054626
+  },
+  {
+    "axis": "stability",
+    "candidate_id": "ATLAS-39F921440EC002E5",
+    "method": "ThermoMPNN",
+    "payload": {
+      "activity_claim": false,
+      "direction": "lower predicted stability regression",
+      "interpretation": "Predicted stabilizing stability trend only; this is not a catalytic-activity prediction.",
+      "raw_predicted_ddg_or_score": -1.0896849632263184,
+      "warnings": ""
+    },
+    "provenance": {
+      "artifact_path": "/content/drive/MyDrive/Atlas/checkpoints/atlas-adaptive-t4-aa5f61d8a5fb-e8f61394/stability/round2/stability_evidence.csv",
+      "evidence_tier": "COMPUTATIONAL_SUPPORT",
+      "model_commit": "2b04fd370e399911b1fa5848112cc9013f084110",
+      "uncertainty_policy": "Fixed epistemic caution band, not a calibrated confidence interval; retrospective activity benchmark was not faithfully separated."
+    },
+    "status": "available",
+    "uncertainty": 0.5,
+    "value": -1.0896849632263184
+  },
+  {
+    "axis": "substrate_interface",
+    "candidate_id": "ATLAS-66C6BB6CAA1C310A",
+    "method": "23WN deposited-distance hypothesis prior",
+    "payload": {
+      "direction": "higher support",
+      "min_substrate_distance_a": 3.3823
+    },
+    "provenance": {
+      "applicability_caveat": "Deposited-coordinate hypothesis prior, not mutant activity.",
+      "evidence_tier": "COMPUTATIONAL_SUPPORT",
+      "model_label": "active_like_inferred"
+    },
+    "status": "available",
+    "uncertainty": 0.25,
+    "value": 0.5964949954069885
+  },
+  {
+    "axis": "catalytic_geometry",
+    "candidate_id": "ATLAS-66C6BB6CAA1C310A",
+    "method": "23WN catalytic-proximity perturbation risk",
+    "payload": {
+      "direction": "lower risk",
+      "min_zinc_distance_a": 18.809
+    },
+    "provenance": {
+      "applicability_caveat": "Deposited-coordinate hypothesis prior, not mutant activity.",
+      "evidence_tier": "COMPUTATIONAL_SUPPORT",
+      "model_label": "active_like_inferred"
+    },
+    "status": "available",
+    "uncertainty": 0.35,
+    "value": 0.0
+  },
+  {
+    "axis": "liability",
+    "candidate_id": "ATLAS-66C6BB6CAA1C310A",
+    "method": "explicit sequence/structural liability rules",
+    "payload": {
+      "direction": "lower liability",
+      "reasons": []
+    },
+    "provenance": {
+      "applicability_caveat": "Deposited-coordinate hypothesis prior, not mutant activity.",
+      "evidence_tier": "COMPUTATIONAL_SUPPORT",
+      "model_label": "active_like_inferred"
+    },
+    "status": "available",
+    "uncertainty": 0.2,
+    "value": 0.0
+  },
+  {
+    "axis": "substrate_interface",
+    "candidate_id": "ATLAS-39F921440EC002E5",
+    "method": "23WN deposited-distance hypothesis prior",
+    "payload": {
+      "direction": "higher support",
+      "min_substrate_distance_a": 7.0468
+    },
+    "provenance": {
+      "applicability_caveat": "Deposited-coordinate hypothesis prior, not mutant activity.",
+      "evidence_tier": "COMPUTATIONAL_SUPPORT",
+      "model_label": "active_like_inferred"
+    },
+    "status": "available",
+    "uncertainty": 0.25,
+    "value": 0.4150479795464356
+  },
+  {
+    "axis": "catalytic_geometry",
+    "candidate_id": "ATLAS-39F921440EC002E5",
+    "method": "23WN catalytic-proximity perturbation risk",
+    "payload": {
+      "direction": "lower risk",
+      "min_zinc_distance_a": 14.0873
+    },
+    "provenance": {
+      "applicability_caveat": "Deposited-coordinate hypothesis prior, not mutant activity.",
+      "evidence_tier": "COMPUTATIONAL_SUPPORT",
+      "model_label": "active_like_inferred"
+    },
+    "status": "available",
+    "uncertainty": 0.35,
+    "value": 0.0
+  },
+  {
+    "axis": "liability",
+    "candidate_id": "ATLAS-39F921440EC002E5",
+    "method": "explicit sequence/structural liability rules",
+    "payload": {
+      "direction": "lower liability",
+      "reasons": [
+        "E104V:charge_class_change"
+      ]
+    },
+    "provenance": {
+      "applicability_caveat": "Deposited-coordinate hypothesis prior, not mutant activity.",
+      "evidence_tier": "COMPUTATIONAL_SUPPORT",
+      "model_label": "active_like_inferred"
+    },
+    "status": "available",
+    "uncertainty": 0.2,
+    "value": 0.1
+  },
+  {
+    "axis": "stability",
+    "candidate_id": "ATLAS-0215A1AE2C58FD57",
+    "method": "ThermoMPNN-D epistatic targeted",
+    "payload": {
+      "activity_claim": false,
+      "direction": "lower predicted stability regression",
+      "interpretation": "Predicted stabilizing stability trend only; this is not a catalytic-activity prediction.",
+      "raw_predicted_ddg_or_score": -1.4997351169586182,
+      "warnings": "Atlas supplied an explicit mutation tensor to the pinned official ThermoMPNN-D epistatic model; this remains stability-only evidence."
+    },
+    "provenance": {
+      "artifact_path": "/content/drive/MyDrive/Atlas/checkpoints/atlas-adaptive-t4-aa5f61d8a5fb-e8f61394/stability/round3/stability_evidence.csv",
+      "evidence_tier": "COMPUTATIONAL_SUPPORT",
+      "model_commit": "df9a75aaddb674a7c4c193005031fc0536d325fb",
+      "uncertainty_policy": "Fixed epistemic caution band, not a calibrated confidence interval; retrospective activity benchmark was not faithfully separated."
+    },
+    "status": "available",
+    "uncertainty": 0.75,
+    "value": -1.4997351169586182
+  },
+  {
+    "axis": "stability",
+    "candidate_id": "ATLAS-1FB316267B702519",
+    "method": "ThermoMPNN-D epistatic targeted",
+    "payload": {
+      "activity_claim": false,
+      "direction": "lower predicted stability regression",
+      "interpretation": "Predicted stabilizing stability trend only; this is not a catalytic-activity prediction.",
+      "raw_predicted_ddg_or_score": -1.840215921401977,
+      "warnings": "Atlas supplied an explicit mutation tensor to the pinned official ThermoMPNN-D epistatic model; this remains stability-only evidence."
+    },
+    "provenance": {
+      "artifact_path": "/content/drive/MyDrive/Atlas/checkpoints/atlas-adaptive-t4-aa5f61d8a5fb-e8f61394/stability/round3/stability_evidence.csv",
+      "evidence_tier": "COMPUTATIONAL_SUPPORT",
+      "model_commit": "df9a75aaddb674a7c4c193005031fc0536d325fb",
+      "uncertainty_policy": "Fixed epistemic caution band, not a calibrated confidence interval; retrospective activity benchmark was not faithfully separated."
+    },
+    "status": "available",
+    "uncertainty": 0.75,
+    "value": -1.840215921401977
+  },
+  {
+    "axis": "substrate_interface",
+    "candidate_id": "ATLAS-0215A1AE2C58FD57",
+    "method": "23WN deposited-distance hypothesis prior",
+    "payload": {
+      "direction": "higher support",
+      "min_substrate_distance_a": 3.0599
+    },
+    "provenance": {
+      "applicability_caveat": "Deposited-coordinate hypothesis prior, not mutant activity.",
+      "evidence_tier": "COMPUTATIONAL_SUPPORT",
+      "model_label": "active_like_inferred"
+    },
+    "status": "available",
+    "uncertainty": 0.25,
+    "value": 0.6203550912542339
+  },
+  {
+    "axis": "catalytic_geometry",
+    "candidate_id": "ATLAS-0215A1AE2C58FD57",
+    "method": "23WN catalytic-proximity perturbation risk",
+    "payload": {
+      "direction": "lower risk",
+      "min_zinc_distance_a": 6.4748
+    },
+    "provenance": {
+      "applicability_caveat": "Deposited-coordinate hypothesis prior, not mutant activity.",
+      "evidence_tier": "COMPUTATIONAL_SUPPORT",
+      "model_label": "active_like_inferred"
+    },
+    "status": "available",
+    "uncertainty": 0.35,
+    "value": 0.35252
+  },
+  {
+    "axis": "liability",
+    "candidate_id": "ATLAS-0215A1AE2C58FD57",
+    "method": "explicit sequence/structural liability rules",
+    "payload": {
+      "direction": "lower liability",
+      "reasons": []
+    },
+    "provenance": {
+      "applicability_caveat": "Deposited-coordinate hypothesis prior, not mutant activity.",
+      "evidence_tier": "COMPUTATIONAL_SUPPORT",
+      "model_label": "active_like_inferred"
+    },
+    "status": "available",
+    "uncertainty": 0.2,
+    "value": 0.0
+  },
+  {
+    "axis": "substrate_interface",
+    "candidate_id": "ATLAS-1FB316267B702519",
+    "method": "23WN deposited-distance hypothesis prior",
+    "payload": {
+      "direction": "higher support",
+      "min_substrate_distance_a": 11.3799
+    },
+    "provenance": {
+      "applicability_caveat": "Deposited-coordinate hypothesis prior, not mutant activity.",
+      "evidence_tier": "COMPUTATIONAL_SUPPORT",
+      "model_label": "active_like_inferred"
+    },
+    "status": "available",
+    "uncertainty": 0.25,
+    "value": 0.30525216881665945
+  },
+  {
+    "axis": "catalytic_geometry",
+    "candidate_id": "ATLAS-1FB316267B702519",
+    "method": "23WN catalytic-proximity perturbation risk",
+    "payload": {
+      "direction": "lower risk",
+      "min_zinc_distance_a": 13.7867
+    },
+    "provenance": {
+      "applicability_caveat": "Deposited-coordinate hypothesis prior, not mutant activity.",
+      "evidence_tier": "COMPUTATIONAL_SUPPORT",
+      "model_label": "active_like_inferred"
+    },
+    "status": "available",
+    "uncertainty": 0.35,
+    "value": 0.0
+  },
+  {
+    "axis": "liability",
+    "candidate_id": "ATLAS-1FB316267B702519",
+    "method": "explicit sequence/structural liability rules",
+    "payload": {
+      "direction": "lower liability",
+      "reasons": [
+        "A16C:unpaired_cysteine_risk",
+        "Q153C:unpaired_cysteine_risk"
+      ]
+    },
+    "provenance": {
+      "applicability_caveat": "Deposited-coordinate hypothesis prior, not mutant activity.",
+      "evidence_tier": "COMPUTATIONAL_SUPPORT",
+      "model_label": "active_like_inferred"
+    },
+    "status": "available",
+    "uncertainty": 0.2,
+    "value": 0.4
+  },
+  {
+    "axis": "stability_model_aware",
+    "candidate_id": "ATLAS-2EB17A2E3DB7062E",
+    "method": "within-model empirical rank: ThermoMPNN",
+    "payload": {
+      "direction": "lower within-model percentile",
+      "raw_axis": "stability",
+      "raw_scale_not_cross_model_comparable": true,
+      "raw_value": -0.5006449222564697
+    },
+    "provenance": {
+      "engineering_policy": true,
+      "model_commit": "2b04fd370e399911b1fa5848112cc9013f084110",
+      "normalization": "within-model empirical percentile",
+      "source_method": "ThermoMPNN"
+    },
+    "status": "available",
+    "uncertainty": 0.022189373390928115,
+    "value": 0.022167487684729065
+  },
+  {
+    "axis": "stability_model_aware",
+    "candidate_id": "ATLAS-66C6BB6CAA1C310A",
+    "method": "within-model empirical rank: ThermoMPNN",
+    "payload": {
+      "direction": "lower within-model percentile",
+      "raw_axis": "stability",
+      "raw_scale_not_cross_model_comparable": true,
+      "raw_value": -0.4897493720054626
+    },
+    "provenance": {
+      "engineering_policy": true,
+      "model_commit": "2b04fd370e399911b1fa5848112cc9013f084110",
+      "normalization": "within-model empirical percentile",
+      "source_method": "ThermoMPNN"
+    },
+    "status": "available",
+    "uncertainty": 0.022189373390928115,
+    "value": 0.02315270935960591
+  },
+  {
+    "axis": "stability_model_aware",
+    "candidate_id": "ATLAS-39F921440EC002E5",
+    "method": "within-model empirical rank: ThermoMPNN",
+    "payload": {
+      "direction": "lower within-model percentile",
+      "raw_axis": "stability",
+      "raw_scale_not_cross_model_comparable": true,
+      "raw_value": -1.0896849632263184
+    },
+    "provenance": {
+      "engineering_policy": true,
+      "model_commit": "2b04fd370e399911b1fa5848112cc9013f084110",
+      "normalization": "within-model empirical percentile",
+      "source_method": "ThermoMPNN"
+    },
+    "status": "available",
+    "uncertainty": 0.022189373390928115,
+    "value": 0.001477832512315271
+  },
+  {
+    "axis": "stability_model_aware",
+    "candidate_id": "ATLAS-0215A1AE2C58FD57",
+    "method": "within-model empirical rank: ThermoMPNN-D epistatic targeted",
+    "payload": {
+      "direction": "lower within-model percentile",
+      "raw_axis": "stability",
+      "raw_scale_not_cross_model_comparable": true,
+      "raw_value": -1.4997351169586182
+    },
+    "provenance": {
+      "engineering_policy": true,
+      "model_commit": "df9a75aaddb674a7c4c193005031fc0536d325fb",
+      "normalization": "within-model empirical percentile",
+      "source_method": "ThermoMPNN-D epistatic targeted"
+    },
+    "status": "available",
+    "uncertainty": 0.018352485989660192,
+    "value": 0.011455525606469003
+  },
+  {
+    "axis": "stability_model_aware",
+    "candidate_id": "ATLAS-1FB316267B702519",
+    "method": "within-model empirical rank: ThermoMPNN-D epistatic targeted",
+    "payload": {
+      "direction": "lower within-model percentile",
+      "raw_axis": "stability",
+      "raw_scale_not_cross_model_comparable": true,
+      "raw_value": -1.840215921401977
+    },
+    "provenance": {
+      "engineering_policy": true,
+      "model_commit": "df9a75aaddb674a7c4c193005031fc0536d325fb",
+      "normalization": "within-model empirical percentile",
+      "source_method": "ThermoMPNN-D epistatic targeted"
+    },
+    "status": "available",
+    "uncertainty": 0.018352485989660192,
+    "value": 0.0023584905660377358
+  },
+  {
+    "axis": "structure_quality",
+    "candidate_id": "ATLAS-1FB316267B702519",
+    "method": "restrained mutant-complex active-site RMSD",
+    "payload": {
+      "direction": "lower RMSD",
+      "geometry": {
+        "active_site_rmsd_a": 0.5369165404494753,
+        "clamp_distance_a": 9.694185256958008,
+        "e96_to_scissile_carbonyl_distance_a": 3.0223324298858643,
+        "geometry_complete": true,
+        "h172_to_scissile_oxygen_distance_a": 3.1900641918182373,
+        "substrate_pose_drift_a": 0.2731707930973305,
+        "substrate_rmsd_a": 0.5487684611987008,
+        "variant_id": "ATLAS-1FB316267B702519",
+        "warnings": [],
+        "y91_d126_pocket_distance_a": 3.567889928817749,
+        "zn_e122_oxygen_distance_a": 1.7575629949569702,
+        "zn_h95_ne2_distance_a": 2.6290555000305176,
+        "zn_h99_ne2_distance_a": 1.925180196762085,
+        "zn_scissile_oxygen_distance_a": 1.8107362985610962
+      }
+    },
+    "provenance": {
+      "artifact_path": "/content/drive/MyDrive/Atlas/checkpoints/atlas-adaptive-t4-aa5f61d8a5fb-e8f61394/structure/ATLAS-1FB316267B702519/model_provenance.json",
+      "evidence_tier": "COMPUTATIONAL_SUPPORT",
+      "model_label": "active_like_inferred",
+      "relaxation_completed": true,
+      "structure_path": "/content/drive/MyDrive/Atlas/checkpoints/atlas-adaptive-t4-aa5f61d8a5fb-e8f61394/structure/ATLAS-1FB316267B702519/restrained_relaxation/minimized.pdb"
+    },
+    "status": "available",
+    "uncertainty": 0.35,
+    "value": 0.5369165404494753
+  },
+  {
+    "axis": "catalytic_geometry",
+    "candidate_id": "ATLAS-1FB316267B702519",
+    "method": "catalytic_preorganization maximum grounded-distance deviation",
+    "payload": {
+      "direction": "lower deviation",
+      "distance_deviations_a": {
+        "e96_to_scissile_carbonyl_distance_a": 1.2028629779815674,
+        "h172_to_scissile_oxygen_distance_a": 0.393204927444458,
+        "zn_e122_oxygen_distance_a": 0.25967705249786377,
+        "zn_h95_ne2_distance_a": 0.32799839973449707,
+        "zn_h99_ne2_distance_a": 0.378387451171875,
+        "zn_scissile_oxygen_distance_a": 0.47583186626434326
+      },
+      "not_catalytic_rate": true
+    },
+    "provenance": {
+      "artifact_path": "/content/drive/MyDrive/Atlas/checkpoints/atlas-adaptive-t4-aa5f61d8a5fb-e8f61394/structure/ATLAS-1FB316267B702519/model_provenance.json",
+      "evidence_tier": "COMPUTATIONAL_SUPPORT",
+      "model_label": "active_like_inferred",
+      "relaxation_completed": true,
+      "structure_path": "/content/drive/MyDrive/Atlas/checkpoints/atlas-adaptive-t4-aa5f61d8a5fb-e8f61394/structure/ATLAS-1FB316267B702519/restrained_relaxation/minimized.pdb"
+    },
+    "status": "available",
+    "uncertainty": 0.35,
+    "value": 1.2028629779815674
+  },
+  {
+    "axis": "substrate_interface",
+    "candidate_id": "ATLAS-1FB316267B702519",
+    "method": "restrained A\u03b2 pose-preservation support",
+    "payload": {
+      "direction": "higher pose-preservation support",
+      "substrate_pose_drift_a": 0.2731707930973305,
+      "substrate_rmsd_a": 0.5487684611987008
+    },
+    "provenance": {
+      "artifact_path": "/content/drive/MyDrive/Atlas/checkpoints/atlas-adaptive-t4-aa5f61d8a5fb-e8f61394/structure/ATLAS-1FB316267B702519/model_provenance.json",
+      "evidence_tier": "COMPUTATIONAL_SUPPORT",
+      "model_label": "active_like_inferred",
+      "relaxation_completed": true,
+      "structure_path": "/content/drive/MyDrive/Atlas/checkpoints/atlas-adaptive-t4-aa5f61d8a5fb-e8f61394/structure/ATLAS-1FB316267B702519/restrained_relaxation/minimized.pdb"
+    },
+    "status": "available",
+    "uncertainty": 0.35,
+    "value": 0.5488657196676868
+  },
+  {
+    "axis": "structure_quality",
+    "candidate_id": "ATLAS-39F921440EC002E5",
+    "method": "restrained mutant-complex active-site RMSD",
+    "payload": {
+      "direction": "lower RMSD",
+      "geometry": {
+        "active_site_rmsd_a": 0.5263701442601348,
+        "clamp_distance_a": 9.567972183227539,
+        "e96_to_scissile_carbonyl_distance_a": 3.0087921619415283,
+        "geometry_complete": true,
+        "h172_to_scissile_oxygen_distance_a": 3.201115131378174,
+        "substrate_pose_drift_a": 0.26097799621138257,
+        "substrate_rmsd_a": 0.5358182337773493,
+        "variant_id": "ATLAS-39F921440EC002E5",
+        "warnings": [],
+        "y91_d126_pocket_distance_a": 2.6787781715393066,
+        "zn_e122_oxygen_distance_a": 1.7676067352294922,
+        "zn_h95_ne2_distance_a": 2.898847818374634,
+        "zn_h99_ne2_distance_a": 1.9543637037277222,
+        "zn_scissile_oxygen_distance_a": 1.7828319072723389
+      }
+    },
+    "provenance": {
+      "artifact_path": "/content/drive/MyDrive/Atlas/checkpoints/atlas-adaptive-t4-aa5f61d8a5fb-e8f61394/structure/ATLAS-39F921440EC002E5/model_provenance.json",
+      "evidence_tier": "COMPUTATIONAL_SUPPORT",
+      "model_label": "active_like_inferred",
+      "relaxation_completed": true,
+      "structure_path": "/content/drive/MyDrive/Atlas/checkpoints/atlas-adaptive-t4-aa5f61d8a5fb-e8f61394/structure/ATLAS-39F921440EC002E5/restrained_relaxation/minimized.pdb"
+    },
+    "status": "available",
+    "uncertainty": 0.35,
+    "value": 0.5263701442601348
+  },
+  {
+    "axis": "catalytic_geometry",
+    "candidate_id": "ATLAS-39F921440EC002E5",
+    "method": "catalytic_preorganization maximum grounded-distance deviation",
+    "payload": {
+      "direction": "lower deviation",
+      "distance_deviations_a": {
+        "e96_to_scissile_carbonyl_distance_a": 1.2164032459259033,
+        "h172_to_scissile_oxygen_distance_a": 0.40425586700439453,
+        "zn_e122_oxygen_distance_a": 0.2496333122253418,
+        "zn_h95_ne2_distance_a": 0.5977907180786133,
+        "zn_h99_ne2_distance_a": 0.3492039442062378,
+        "zn_scissile_oxygen_distance_a": 0.5037362575531006
+      },
+      "not_catalytic_rate": true
+    },
+    "provenance": {
+      "artifact_path": "/content/drive/MyDrive/Atlas/checkpoints/atlas-adaptive-t4-aa5f61d8a5fb-e8f61394/structure/ATLAS-39F921440EC002E5/model_provenance.json",
+      "evidence_tier": "COMPUTATIONAL_SUPPORT",
+      "model_label": "active_like_inferred",
+      "relaxation_completed": true,
+      "structure_path": "/content/drive/MyDrive/Atlas/checkpoints/atlas-adaptive-t4-aa5f61d8a5fb-e8f61394/structure/ATLAS-39F921440EC002E5/restrained_relaxation/minimized.pdb"
+    },
+    "status": "available",
+    "uncertainty": 0.35,
+    "value": 1.2164032459259033
+  },
+  {
+    "axis": "substrate_interface",
+    "candidate_id": "ATLAS-39F921440EC002E5",
+    "method": "restrained A\u03b2 pose-preservation support",
+    "payload": {
+      "direction": "higher pose-preservation support",
+      "substrate_pose_drift_a": 0.26097799621138257,
+      "substrate_rmsd_a": 0.5358182337773493
+    },
+    "provenance": {
+      "artifact_path": "/content/drive/MyDrive/Atlas/checkpoints/atlas-adaptive-t4-aa5f61d8a5fb-e8f61394/structure/ATLAS-39F921440EC002E5/model_provenance.json",
+      "evidence_tier": "COMPUTATIONAL_SUPPORT",
+      "model_label": "active_like_inferred",
+      "relaxation_completed": true,
+      "structure_path": "/content/drive/MyDrive/Atlas/checkpoints/atlas-adaptive-t4-aa5f61d8a5fb-e8f61394/structure/ATLAS-39F921440EC002E5/restrained_relaxation/minimized.pdb"
+    },
+    "status": "available",
+    "uncertainty": 0.35,
+    "value": 0.556546136567902
+  },
+  {
+    "axis": "structure_quality",
+    "candidate_id": "ATLAS-0215A1AE2C58FD57",
+    "method": "restrained mutant-complex active-site RMSD",
+    "payload": {
+      "direction": "lower RMSD",
+      "geometry": {
+        "active_site_rmsd_a": 0.5049040580811699,
+        "clamp_distance_a": 9.753203392028809,
+        "e96_to_scissile_carbonyl_distance_a": 3.0717060565948486,
+        "geometry_complete": true,
+        "h172_to_scissile_oxygen_distance_a": 3.233938217163086,
+        "substrate_pose_drift_a": 0.2632987384411338,
+        "substrate_rmsd_a": 0.5652029697825377,
+        "variant_id": "ATLAS-0215A1AE2C58FD57",
+        "warnings": [],
+        "y91_d126_pocket_distance_a": 2.6311264038085938,
+        "zn_e122_oxygen_distance_a": 1.765499472618103,
+        "zn_h95_ne2_distance_a": 2.946883201599121,
+        "zn_h99_ne2_distance_a": 1.932327151298523,
+        "zn_scissile_oxygen_distance_a": 1.7739039659500122
+      }
+    },
+    "provenance": {
+      "artifact_path": "/content/drive/MyDrive/Atlas/checkpoints/atlas-adaptive-t4-aa5f61d8a5fb-e8f61394/structure/ATLAS-0215A1AE2C58FD57/model_provenance.json",
+      "evidence_tier": "COMPUTATIONAL_SUPPORT",
+      "model_label": "active_like_inferred",
+      "relaxation_completed": true,
+      "structure_path": "/content/drive/MyDrive/Atlas/checkpoints/atlas-adaptive-t4-aa5f61d8a5fb-e8f61394/structure/ATLAS-0215A1AE2C58FD57/restrained_relaxation/minimized.pdb"
+    },
+    "status": "available",
+    "uncertainty": 0.35,
+    "value": 0.5049040580811699
+  },
+  {
+    "axis": "catalytic_geometry",
+    "candidate_id": "ATLAS-0215A1AE2C58FD57",
+    "method": "catalytic_preorganization maximum grounded-distance deviation",
+    "payload": {
+      "direction": "lower deviation",
+      "distance_deviations_a": {
+        "e96_to_scissile_carbonyl_distance_a": 1.153489351272583,
+        "h172_to_scissile_oxygen_distance_a": 0.43707895278930664,
+        "zn_e122_oxygen_distance_a": 0.25174057483673096,
+        "zn_h95_ne2_distance_a": 0.6458261013031006,
+        "zn_h99_ne2_distance_a": 0.371240496635437,
+        "zn_scissile_oxygen_distance_a": 0.5126641988754272
+      },
+      "not_catalytic_rate": true
+    },
+    "provenance": {
+      "artifact_path": "/content/drive/MyDrive/Atlas/checkpoints/atlas-adaptive-t4-aa5f61d8a5fb-e8f61394/structure/ATLAS-0215A1AE2C58FD57/model_provenance.json",
+      "evidence_tier": "COMPUTATIONAL_SUPPORT",
+      "model_label": "active_like_inferred",
+      "relaxation_completed": true,
+      "structure_path": "/content/drive/MyDrive/Atlas/checkpoints/atlas-adaptive-t4-aa5f61d8a5fb-e8f61394/structure/ATLAS-0215A1AE2C58FD57/restrained_relaxation/minimized.pdb"
+    },
+    "status": "available",
+    "uncertainty": 0.35,
+    "value": 1.153489351272583
+  },
+  {
+    "axis": "substrate_interface",
+    "candidate_id": "ATLAS-0215A1AE2C58FD57",
+    "method": "restrained A\u03b2 pose-preservation support",
+    "payload": {
+      "direction": "higher pose-preservation support",
+      "substrate_pose_drift_a": 0.2632987384411338,
+      "substrate_rmsd_a": 0.5652029697825377
+    },
+    "provenance": {
+      "artifact_path": "/content/drive/MyDrive/Atlas/checkpoints/atlas-adaptive-t4-aa5f61d8a5fb-e8f61394/structure/ATLAS-0215A1AE2C58FD57/model_provenance.json",
+      "evidence_tier": "COMPUTATIONAL_SUPPORT",
+      "model_label": "active_like_inferred",
+      "relaxation_completed": true,
+      "structure_path": "/content/drive/MyDrive/Atlas/checkpoints/atlas-adaptive-t4-aa5f61d8a5fb-e8f61394/structure/ATLAS-0215A1AE2C58FD57/restrained_relaxation/minimized.pdb"
+    },
+    "status": "available",
+    "uncertainty": 0.35,
+    "value": 0.5468958522174238
+  },
+  {
+    "axis": "structure_quality",
+    "candidate_id": "ATLAS-2EB17A2E3DB7062E",
+    "method": "restrained mutant-complex active-site RMSD",
+    "payload": {
+      "direction": "lower RMSD",
+      "geometry": {
+        "active_site_rmsd_a": 0.4944082595506807,
+        "clamp_distance_a": 9.367558479309082,
+        "e96_to_scissile_carbonyl_distance_a": 3.014976739883423,
+        "geometry_complete": true,
+        "h172_to_scissile_oxygen_distance_a": 3.189713478088379,
+        "substrate_pose_drift_a": 0.2536179959292119,
+        "substrate_rmsd_a": 0.5463875981380917,
+        "variant_id": "ATLAS-2EB17A2E3DB7062E",
+        "warnings": [],
+        "y91_d126_pocket_distance_a": 2.6319222450256348,
+        "zn_e122_oxygen_distance_a": 1.7581831216812134,
+        "zn_h95_ne2_distance_a": 2.6219661235809326,
+        "zn_h99_ne2_distance_a": 1.9207357168197632,
+        "zn_scissile_oxygen_distance_a": 1.811571478843689
+      }
+    },
+    "provenance": {
+      "artifact_path": "/content/drive/MyDrive/Atlas/checkpoints/atlas-adaptive-t4-aa5f61d8a5fb-e8f61394/structure/ATLAS-2EB17A2E3DB7062E/model_provenance.json",
+      "evidence_tier": "COMPUTATIONAL_SUPPORT",
+      "model_label": "active_like_inferred",
+      "relaxation_completed": true,
+      "structure_path": "/content/drive/MyDrive/Atlas/checkpoints/atlas-adaptive-t4-aa5f61d8a5fb-e8f61394/structure/ATLAS-2EB17A2E3DB7062E/restrained_relaxation/minimized.pdb"
+    },
+    "status": "available",
+    "uncertainty": 0.35,
+    "value": 0.4944082595506807
+  },
+  {
+    "axis": "catalytic_geometry",
+    "candidate_id": "ATLAS-2EB17A2E3DB7062E",
+    "method": "catalytic_preorganization maximum grounded-distance deviation",
+    "payload": {
+      "direction": "lower deviation",
+      "distance_deviations_a": {
+        "e96_to_scissile_carbonyl_distance_a": 1.2102186679840088,
+        "h172_to_scissile_oxygen_distance_a": 0.3928542137145996,
+        "zn_e122_oxygen_distance_a": 0.2590569257736206,
+        "zn_h95_ne2_distance_a": 0.3209090232849121,
+        "zn_h99_ne2_distance_a": 0.3828319311141968,
+        "zn_scissile_oxygen_distance_a": 0.4749966859817505
+      },
+      "not_catalytic_rate": true
+    },
+    "provenance": {
+      "artifact_path": "/content/drive/MyDrive/Atlas/checkpoints/atlas-adaptive-t4-aa5f61d8a5fb-e8f61394/structure/ATLAS-2EB17A2E3DB7062E/model_provenance.json",
+      "evidence_tier": "COMPUTATIONAL_SUPPORT",
+      "model_label": "active_like_inferred",
+      "relaxation_completed": true,
+      "structure_path": "/content/drive/MyDrive/Atlas/checkpoints/atlas-adaptive-t4-aa5f61d8a5fb-e8f61394/structure/ATLAS-2EB17A2E3DB7062E/restrained_relaxation/minimized.pdb"
+    },
+    "status": "available",
+    "uncertainty": 0.35,
+    "value": 1.2102186679840088
+  },
+  {
+    "axis": "substrate_interface",
+    "candidate_id": "ATLAS-2EB17A2E3DB7062E",
+    "method": "restrained A\u03b2 pose-preservation support",
+    "payload": {
+      "direction": "higher pose-preservation support",
+      "substrate_pose_drift_a": 0.2536179959292119,
+      "substrate_rmsd_a": 0.5463875981380917
+    },
+    "provenance": {
+      "artifact_path": "/content/drive/MyDrive/Atlas/checkpoints/atlas-adaptive-t4-aa5f61d8a5fb-e8f61394/structure/ATLAS-2EB17A2E3DB7062E/model_provenance.json",
+      "evidence_tier": "COMPUTATIONAL_SUPPORT",
+      "model_label": "active_like_inferred",
+      "relaxation_completed": true,
+      "structure_path": "/content/drive/MyDrive/Atlas/checkpoints/atlas-adaptive-t4-aa5f61d8a5fb-e8f61394/structure/ATLAS-2EB17A2E3DB7062E/restrained_relaxation/minimized.pdb"
+    },
+    "status": "available",
+    "uncertainty": 0.35,
+    "value": 0.5555538289969387
+  },
+  {
+    "axis": "structure_quality",
+    "candidate_id": "ATLAS-66C6BB6CAA1C310A",
+    "method": "restrained mutant-complex active-site RMSD",
+    "payload": {
+      "direction": "lower RMSD",
+      "geometry": {
+        "active_site_rmsd_a": 0.5107449595535423,
+        "clamp_distance_a": 9.438029289245605,
+        "e96_to_scissile_carbonyl_distance_a": 2.9963903427124023,
+        "geometry_complete": true,
+        "h172_to_scissile_oxygen_distance_a": 3.188655376434326,
+        "substrate_pose_drift_a": 0.17261168444536362,
+        "substrate_rmsd_a": 0.4652838382437671,
+        "variant_id": "ATLAS-66C6BB6CAA1C310A",
+        "warnings": [],
+        "y91_d126_pocket_distance_a": 2.680922746658325,
+        "zn_e122_oxygen_distance_a": 1.7579305171966553,
+        "zn_h95_ne2_distance_a": 2.640582323074341,
+        "zn_h99_ne2_distance_a": 1.9252592325210571,
+        "zn_scissile_oxygen_distance_a": 1.8118590116500854
+      }
+    },
+    "provenance": {
+      "artifact_path": "/content/drive/MyDrive/Atlas/checkpoints/atlas-adaptive-t4-aa5f61d8a5fb-e8f61394/structure/ATLAS-66C6BB6CAA1C310A/model_provenance.json",
+      "evidence_tier": "COMPUTATIONAL_SUPPORT",
+      "model_label": "active_like_inferred",
+      "relaxation_completed": true,
+      "structure_path": "/content/drive/MyDrive/Atlas/checkpoints/atlas-adaptive-t4-aa5f61d8a5fb-e8f61394/structure/ATLAS-66C6BB6CAA1C310A/restrained_relaxation/minimized.pdb"
+    },
+    "status": "available",
+    "uncertainty": 0.35,
+    "value": 0.5107449595535423
+  },
+  {
+    "axis": "catalytic_geometry",
+    "candidate_id": "ATLAS-66C6BB6CAA1C310A",
+    "method": "catalytic_preorganization maximum grounded-distance deviation",
+    "payload": {
+      "direction": "lower deviation",
+      "distance_deviations_a": {
+        "e96_to_scissile_carbonyl_distance_a": 1.2288050651550293,
+        "h172_to_scissile_oxygen_distance_a": 0.3917961120605469,
+        "zn_e122_oxygen_distance_a": 0.2593095302581787,
+        "zn_h95_ne2_distance_a": 0.3395252227783203,
+        "zn_h99_ne2_distance_a": 0.37830841541290283,
+        "zn_scissile_oxygen_distance_a": 0.474709153175354
+      },
+      "not_catalytic_rate": true
+    },
+    "provenance": {
+      "artifact_path": "/content/drive/MyDrive/Atlas/checkpoints/atlas-adaptive-t4-aa5f61d8a5fb-e8f61394/structure/ATLAS-66C6BB6CAA1C310A/model_provenance.json",
+      "evidence_tier": "COMPUTATIONAL_SUPPORT",
+      "model_label": "active_like_inferred",
+      "relaxation_completed": true,
+      "structure_path": "/content/drive/MyDrive/Atlas/checkpoints/atlas-adaptive-t4-aa5f61d8a5fb-e8f61394/structure/ATLAS-66C6BB6CAA1C310A/restrained_relaxation/minimized.pdb"
+    },
+    "status": "available",
+    "uncertainty": 0.35,
+    "value": 1.2288050651550293
+  },
+  {
+    "axis": "substrate_interface",
+    "candidate_id": "ATLAS-66C6BB6CAA1C310A",
+    "method": "restrained A\u03b2 pose-preservation support",
+    "payload": {
+      "direction": "higher pose-preservation support",
+      "substrate_pose_drift_a": 0.17261168444536362,
+      "substrate_rmsd_a": 0.4652838382437671
+    },
+    "provenance": {
+      "artifact_path": "/content/drive/MyDrive/Atlas/checkpoints/atlas-adaptive-t4-aa5f61d8a5fb-e8f61394/structure/ATLAS-66C6BB6CAA1C310A/model_provenance.json",
+      "evidence_tier": "COMPUTATIONAL_SUPPORT",
+      "model_label": "active_like_inferred",
+      "relaxation_completed": true,
+      "structure_path": "/content/drive/MyDrive/Atlas/checkpoints/atlas-adaptive-t4-aa5f61d8a5fb-e8f61394/structure/ATLAS-66C6BB6CAA1C310A/restrained_relaxation/minimized.pdb"
+    },
+    "status": "available",
+    "uncertainty": 0.35,
+    "value": 0.61053955282702
+  },
+  {
+    "axis": "stability_model_aware",
+    "candidate_id": "ATLAS-2EB17A2E3DB7062E",
+    "method": "within-model empirical rank: ThermoMPNN",
+    "payload": {
+      "direction": "lower within-model percentile",
+      "raw_axis": "stability",
+      "raw_scale_not_cross_model_comparable": true,
+      "raw_value": -0.5006449222564697
+    },
+    "provenance": {
+      "engineering_policy": true,
+      "model_commit": "2b04fd370e399911b1fa5848112cc9013f084110",
+      "normalization": "within-model empirical percentile",
+      "source_method": "ThermoMPNN"
+    },
+    "status": "available",
+    "uncertainty": 0.022189373390928115,
+    "value": 0.022167487684729065
+  },
+  {
+    "axis": "stability_model_aware",
+    "candidate_id": "ATLAS-66C6BB6CAA1C310A",
+    "method": "within-model empirical rank: ThermoMPNN",
+    "payload": {
+      "direction": "lower within-model percentile",
+      "raw_axis": "stability",
+      "raw_scale_not_cross_model_comparable": true,
+      "raw_value": -0.4897493720054626
+    },
+    "provenance": {
+      "engineering_policy": true,
+      "model_commit": "2b04fd370e399911b1fa5848112cc9013f084110",
+      "normalization": "within-model empirical percentile",
+      "source_method": "ThermoMPNN"
+    },
+    "status": "available",
+    "uncertainty": 0.022189373390928115,
+    "value": 0.02315270935960591
+  },
+  {
+    "axis": "stability_model_aware",
+    "candidate_id": "ATLAS-39F921440EC002E5",
+    "method": "within-model empirical rank: ThermoMPNN",
+    "payload": {
+      "direction": "lower within-model percentile",
+      "raw_axis": "stability",
+      "raw_scale_not_cross_model_comparable": true,
+      "raw_value": -1.0896849632263184
+    },
+    "provenance": {
+      "engineering_policy": true,
+      "model_commit": "2b04fd370e399911b1fa5848112cc9013f084110",
+      "normalization": "within-model empirical percentile",
+      "source_method": "ThermoMPNN"
+    },
+    "status": "available",
+    "uncertainty": 0.022189373390928115,
+    "value": 0.001477832512315271
+  },
+  {
+    "axis": "stability_model_aware",
+    "candidate_id": "ATLAS-0215A1AE2C58FD57",
+    "method": "within-model empirical rank: ThermoMPNN-D epistatic targeted",
+    "payload": {
+      "direction": "lower within-model percentile",
+      "raw_axis": "stability",
+      "raw_scale_not_cross_model_comparable": true,
+      "raw_value": -1.4997351169586182
+    },
+    "provenance": {
+      "engineering_policy": true,
+      "model_commit": "df9a75aaddb674a7c4c193005031fc0536d325fb",
+      "normalization": "within-model empirical percentile",
+      "source_method": "ThermoMPNN-D epistatic targeted"
+    },
+    "status": "available",
+    "uncertainty": 0.018352485989660192,
+    "value": 0.011455525606469003
+  },
+  {
+    "axis": "stability_model_aware",
+    "candidate_id": "ATLAS-1FB316267B702519",
+    "method": "within-model empirical rank: ThermoMPNN-D epistatic targeted",
+    "payload": {
+      "direction": "lower within-model percentile",
+      "raw_axis": "stability",
+      "raw_scale_not_cross_model_comparable": true,
+      "raw_value": -1.840215921401977
+    },
+    "provenance": {
+      "engineering_policy": true,
+      "model_commit": "df9a75aaddb674a7c4c193005031fc0536d325fb",
+      "normalization": "within-model empirical percentile",
+      "source_method": "ThermoMPNN-D epistatic targeted"
+    },
+    "status": "available",
+    "uncertainty": 0.018352485989660192,
+    "value": 0.0023584905660377358
+  }
+]
