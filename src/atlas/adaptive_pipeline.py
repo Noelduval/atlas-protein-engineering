@@ -711,6 +711,16 @@ def _portfolio(
 ) -> tuple[Evaluation, ...]:
     if not evaluations:
         return ()
+    required_axes = frozenset(
+        objective.axis for objective in STRUCTURAL_OBJECTIVES
+    )
+    evaluations = tuple(
+        evaluation
+        for evaluation in evaluations
+        if required_axes.issubset(evaluation.latest_by_axis())
+    )
+    if not evaluations:
+        return ()
     initial = select_diverse_survivors(
         evaluations,
         STRUCTURAL_OBJECTIVES,

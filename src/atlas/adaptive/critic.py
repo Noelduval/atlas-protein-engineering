@@ -42,6 +42,16 @@ class Critique:
 class CriticPolicy:
     """Route candidates while keeping hard failures and soft tradeoffs distinct."""
 
+    _REQUIRED_PROMOTION_AXES = frozenset(
+        {
+            EvidenceAxis.STABILITY_MODEL_AWARE,
+            EvidenceAxis.STRUCTURE_QUALITY,
+            EvidenceAxis.CATALYTIC_GEOMETRY,
+            EvidenceAxis.SUBSTRATE_INTERFACE,
+            EvidenceAxis.LIABILITY,
+        }
+    )
+
     _SUPPORT = {
         EvidenceAxis.STABILITY_MODEL_AWARE: ("maximum", 0.25),
         EvidenceAxis.STRUCTURE_QUALITY: ("maximum", 0.5),
@@ -93,6 +103,25 @@ class CriticPolicy:
             )
 
         by_axis = evaluation.latest_by_axis()
+        missing = self._REQUIRED_PROMOTION_AXES - by_axis.keys()
+        if missing:
+            missing_names = ", ".join(sorted(axis.value for axis in missing))
+            return Critique(
+                candidate_id=candidate_id,
+                route=CriticRoute.REVISE,
+                supporting_signals=tuple(
+                    f"{axis.value}={by_axis[axis].value:g} is available"
+                    for axis in sorted(by_axis, key=lambda item: item.value)
+                ),
+                weakness_axis=sorted(missing, key=lambda item: item.value)[0],
+                diagnosed_weakness=f"Required evidence is missing: {missing_names}.",
+                repairable=True,
+                feature_to_preserve="Complete required structural evidence bundle.",
+                rationale=(
+                    "Promotion requires a complete structural evidence bundle; missing "
+                    "evidence is not treated as favorable."
+                ),
+            )
         supporting: list[str] = []
         for axis, (comparator, threshold) in self._SUPPORT.items():
             record = by_axis.get(axis)

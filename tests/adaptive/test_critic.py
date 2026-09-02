@@ -85,7 +85,7 @@ def test_critic_routes_supported_repairable_near_miss_to_revision() -> None:
     critique = CriticPolicy().critique(evaluation)
     assert critique.route is CriticRoute.REVISE
     assert critique.supporting_signals
-    assert critique.weakness_axis is EvidenceAxis.STABILITY_MODEL_AWARE
+    assert critique.weakness_axis is EvidenceAxis.CATALYTIC_GEOMETRY
     assert critique.repairable is True
     assert critique.feature_to_preserve
 
@@ -117,9 +117,24 @@ def test_dynamics_is_not_a_production_support_or_weakness_axis() -> None:
 
     critique = CriticPolicy().critique(evaluation)
 
-    assert critique.route is CriticRoute.PROMOTE
-    assert critique.weakness_axis is None
-    assert all("dynamics" not in signal for signal in critique.supporting_signals)
+    assert critique.route is CriticRoute.REVISE
+    assert "required evidence is missing" in critique.diagnosed_weakness.lower()
+
+
+def test_critic_never_promotes_partial_structural_evidence() -> None:
+    candidate = _candidate()
+    evidence = tuple(
+        _numeric(candidate, axis, 0.1)
+        for axis in (
+            EvidenceAxis.STABILITY_MODEL_AWARE,
+            EvidenceAxis.STRUCTURE_QUALITY,
+            EvidenceAxis.CATALYTIC_GEOMETRY,
+            EvidenceAxis.SUBSTRATE_INTERFACE,
+        )
+    )
+    critique = CriticPolicy().critique(Evaluation(candidate, evidence))
+    assert critique.route is CriticRoute.REVISE
+    assert "liability" in critique.diagnosed_weakness
 
 
 def test_repair_children_are_bounded_and_document_preservation_goal() -> None:
