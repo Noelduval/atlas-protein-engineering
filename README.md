@@ -1,114 +1,92 @@
-# Atlas v1
+# Atlas
 
-Atlas v1 is an adaptive computational workflow for prioritizing wet-lab mutation experiments on the DP622 metalloprotease scaffold. Its sole production authority is:
+Atlas is an autonomous computational protein-engineering system that generated
+and screened 5,000 DP622-inspired metalloprotease variants and prioritized five
+experimentally testable candidates for Aβ-related wet-lab evaluation.
 
-```text
-atlas adaptive-run
-→ active-like DP622/Aβ/Zn reconstruction
-→ biology-aware design space
-→ mechanism-aware adaptive proposals
-→ genuine ThermoMPNN/ThermoMPNN-D stability inference
-→ model-aware Pareto/diversity funnel
-→ candidate-specific mutant complexes
-→ chemistry, catalytic-preorganization, and Aβ pose/contact evidence
-→ bounded repair and adversarial review
-→ orthogonal fold-recovery adapter, bounded Aβ specificity and local-pose robustness
-→ sequence/static-structure developability risk screen and wet-lab dossiers
-→ ≤5 experimentally untested wet-lab hypotheses
-```
+**EXPERIMENTALLY UNTESTED:** these are computationally prioritized hypotheses,
+not validated improvements in Aβ cleavage.
 
-Atlas prioritizes physical plausibility and experimental information value. It does not predict `kcat`, `Km`, `kcat/Km`, therapeutic efficacy, plaque clearance, or experimental validation.
+## Result
 
-## Starting system
-
-PDB 23WN contains a pre-catalytic cryo-EM DP622 E96Q/Aβ/Zn complex. Deposited chain A residues 25–239 map to DP622 residues 1–215. Atlas retains the resolved Aβ fragment and Zn, renumbers DP622, and restores deposited Q120 to catalytic E96. The canonical model is therefore `active_like_inferred`, not an experimentally observed exact active DP622-S2 complex.
-
-## Scientific policy
-
-- Indispensable catalytic and Zn-coordinating residues are hard protected.
-- `allowed_substitution_classes` directly controls legal mutation identities.
-- Cys, Gly, and Pro have distinct context-specific policies; they are not one conservative class.
-- Buried charge and exposed-hydrophobe liabilities are explicit.
-- H/C/D/E introductions in the existing Zn-proximal design context receive explicit metal-liability treatment and candidate-specific geometry checks.
-- Doubles are categorized as local/coupled, function plus stability-rescue, or orthogonal-mechanism experiments, with high epistasis uncertainty.
-- The experimentally characterized Y91F/D126A double is retrospective evidence and cannot be presented as a novel finalist.
-- ThermoMPNN and ThermoMPNN-D raw values remain separate. Pareto screening uses within-model empirical ranks and never subtracts or combines their raw scales.
-- Deposited-coordinate distances are pre-structure context/stratification, not mutant-performance measurements.
-- Final candidates are labeled **EXPERIMENTALLY UNTESTED BEST-SUPPORTED WET-LAB HYPOTHESES**.
-
-## Replicated MD exclusion
-
-Replicated explicit-solvent MD was evaluated as a prospective evidence layer but excluded from Atlas candidate discrimination after the DP622/Aβ/Zn reference failed reproducible numerical and catalytic/substrate-geometry validation.
-
-Replicated MD is not a production adaptive stage, evidence-completeness requirement, Pareto axis, critic support/weakness, repair step, dossier axis, or finalist gate. Missing dynamics evidence never penalizes a candidate. Restrained PDBFixer/OpenMM mutant-complex preparation and minimization remain a distinct structure-building step.
-
-## Production components
-
-| Component | Production role |
-| --- | --- |
-| `design/adaptive_generator.py` | Mechanism-aware single and double proposals |
-| `adaptive/screening.py` | Independent-axis, uncertainty-aware Pareto/diversity funnel |
-| `adaptive/critic.py` | Hard/soft evidence routing and bounded repair decisions |
-| `adaptive_pipeline.py` | Checkpointed production authority |
-| `adaptive_backend.py` | Pinned stability inference and candidate-specific structures |
-| `reporting/adaptive_outputs.py` | Finalists, dossiers, evidence exports, figures, and manifest |
-| `late_stage/` | Checkpoint-reusing orthogonal structure, specificity, pose-robustness, developability, and dossier evidence |
-
-`candidate_generator.py`, `rank_candidates.py`, the historical validation-gated `atlas run` workflow, and legacy orchestration paths are not authorities for adaptive finalists.
-
-## GPU production
-
-Use Python 3.10–3.12 and the pinned upstream repositories:
-
-```bash
-git clone https://github.com/Kuhlman-Lab/ThermoMPNN.git .external/ThermoMPNN
-git -C .external/ThermoMPNN checkout 2b04fd370e399911b1fa5848112cc9013f084110
-git clone https://github.com/Kuhlman-Lab/ThermoMPNN-D.git .external/ThermoMPNN-D
-git -C .external/ThermoMPNN-D checkout df9a75aaddb674a7c4c193005031fc0536d325fb
-
-atlas adaptive-run \
-  --input data/23WN.cif \
-  --output-root outputs \
-  --atlas-repo . \
-  --thermompnn-repo .external/ThermoMPNN \
-  --thermompnn-d-repo .external/ThermoMPNN-D \
-  --run-id atlas-adaptive-production \
-  --candidate-budget 5000
-
-atlas late-stage \
-  --run-dir outputs/atlas-adaptive-production \
-  --input data/23WN.cif \
-  --resume
-```
-
-The Colab entry point is [`notebooks/Atlas_DP622_Colab.ipynb`](notebooks/Atlas_DP622_Colab.ipynb). It uses a T4 runtime, pinned model revisions, a single managed scientific Python environment, Google Drive checkpoints, `atlas adaptive-run --resume`, and then `atlas late-stage --resume` only on the persisted adversarial set. If the real external sequence-to-structure predictor is absent or fails, that evidence is recorded as unavailable/invalid; Atlas never substitutes synthetic structure-prediction evidence.
-
-## Production artifacts
-
-A completed run contains the design-space CSV/JSON, generation policy and coverage summary, full SQLite ledger and JSONL events, raw and normalized stability evidence, candidate-specific PDBs and provenance, repair trajectories, adversarial reviews, near misses, final selection trace, finalist FASTAs/PDBs/evidence/dossiers, figures, limitations report, reproducibility manifest, completion audit, and execution status.
-
-Completion is proved by persisted artifacts, not terminal text. Wet-lab expression, folding/stability, cleavage-site-resolved Aβ assays, matched kinetics, specificity profiling, and Zn-dependence controls determine actual performance.
-
-## Completed Gate-3 campaign
-
-The first bounded prospective Atlas campaign completed on the pinned T4/Colab path. It evaluated 5,000 unique legal DP622-inspired mutation hypotheses under the frozen Gate-2 policy:
+The completed campaign executed this funnel:
 
 ```text
-5,000 generated → 500 broad survivors → 146 structural analyses → 10 adversarial reviews → 5 selected
+5,000 unique legal variants → 500 broad survivors → 146 structure-level analyses
+→ 10 adversarially reviewed candidates → 5 finalists
 ```
 
-The five computationally prioritized, experimentally untested hypotheses are:
+| Candidate | Mutations | Design rationale | Supporting evidence | Key uncertainty | Files |
+| --- | --- | --- | --- | --- | --- |
+| [ATLAS-0215A1AE2C58FD57](results/gate3/dossiers/ATLAS-0215A1AE2C58FD57.md) | G65M/Q153M | Function-oriented change paired with distal support | Independent stability, structure, and interface support | Epistatic double; wet-lab behavior unknown | [FASTA](results/gate3/fastas/ATLAS-0215A1AE2C58FD57.fasta) · [PDB](results/gate3/structures/ATLAS-0215A1AE2C58FD57.pdb) |
+| [ATLAS-1FB316267B702519](results/gate3/dossiers/ATLAS-1FB316267B702519.md) | A16C/Q153C | Orthogonal-mechanism epistatic double | Preserved structure/interface support | Cysteine liability is soft; wet-lab behavior unknown | [FASTA](results/gate3/fastas/ATLAS-1FB316267B702519.fasta) · [PDB](results/gate3/structures/ATLAS-1FB316267B702519.pdb) |
+| [ATLAS-2EB17A2E3DB7062E](results/gate3/dossiers/ATLAS-2EB17A2E3DB7062E.md) | A130L | Conservative distal-stability explorer | Stability with preserved required support | Expression, folding, and activity unknown | [FASTA](results/gate3/fastas/ATLAS-2EB17A2E3DB7062E.fasta) · [PDB](results/gate3/structures/ATLAS-2EB17A2E3DB7062E.pdb) |
+| [ATLAS-39F921440EC002E5](results/gate3/dossiers/ATLAS-39F921440EC002E5.md) | E104V | Second-shell preorganization explorer | Preserved structure/interface support | Charge-class warning; wet-lab behavior unknown | [FASTA](results/gate3/fastas/ATLAS-39F921440EC002E5.fasta) · [PDB](results/gate3/structures/ATLAS-39F921440EC002E5.pdb) |
+| [ATLAS-66C6BB6CAA1C310A](results/gate3/dossiers/ATLAS-66C6BB6CAA1C310A.md) | A37Y | Substrate-interface explorer | Strongest retained interface support | Static support does not establish cleavage | [FASTA](results/gate3/fastas/ATLAS-66C6BB6CAA1C310A.fasta) · [PDB](results/gate3/structures/ATLAS-66C6BB6CAA1C310A.pdb) |
 
-| Candidate | Mutation set | Evidence summary | Experimental status |
-| --- | --- | --- | --- |
-| `ATLAS-0215A1AE2C58FD57` | G65M/Q153M | Epistatic double retaining independent stability, structure, and substrate-interface support | Untested; wet-lab evaluation recommended |
-| `ATLAS-1FB316267B702519` | A16C/Q153C | Orthogonal epistatic double with preserved structural/interface support; cysteine liability is soft | Untested; wet-lab evaluation recommended |
-| `ATLAS-2EB17A2E3DB7062E` | A130L | Conservative distal-stability hypothesis with no listed liability trigger | Untested; wet-lab evaluation recommended |
-| `ATLAS-39F921440EC002E5` | E104V | Second-shell packing/preorganization hypothesis with a soft charge-class warning | Untested; wet-lab evaluation recommended |
-| `ATLAS-66C6BB6CAA1C310A` | A37Y | Substrate-interface hypothesis with the strongest retained interface support | Untested; wet-lab evaluation recommended |
+See the [finalist summary](results/gate3/FINALIST_SUMMARY.md) and [final design report](results/gate3/atlas_final_design_report.md) for the artifact-backed result.
 
-The detailed, artifact-backed dossiers, finalist structures/FASTAs, evidence tables, figures, selection trace, completion audit, provenance, and limitations are in [`results/gate3/`](results/gate3/). The result is a portfolio of falsifiable wet-lab hypotheses—not evidence of improved `kcat`, `Km`, catalytic efficiency, Aβ cleavage, plaque reduction, therapeutic efficacy, or patient benefit.
+## Why Atlas
 
-Gate 2 mattered because retrospective VITA controls demonstrated that stability and static geometry cannot stand in for catalytic-activity ranking. Consequently, ThermoMPNN/ThermoMPNN-D remain stability evidence only; pose robustness is diagnostic; generic developability warnings are soft; specificity is required where exercisable; and protected chemistry and genuine hard blockers remain hard. These rules and thresholds were frozen before Gate 3 and were not relaxed after observing the yield.
+Atlas tackles a VITA-inspired problem: optimizing a metalloprotease scaffold for
+Aβ-related cleavage while keeping catalytic chemistry, structural plausibility,
+stability, interface evidence, and developability visible. The challenge is
+not producing one opaque score; it is orchestrating independent evidence,
+recording disagreement, remembering failures, and preserving provenance.
 
-The campaign used Atlas `aa5f61d8a5fbaffb50e1c2fef3b6b3cc275f707c`, ThermoMPNN `2b04fd370e399911b1fa5848112cc9013f084110`, ThermoMPNN-D `df9a75aaddb674a7c4c193005031fc0536d325fb`, seed `622`, candidate budget `5000`, round1 target `1200`, minimum doubles `750`, broad target `500`, structure target `100`, adversarial target `10`, portfolio target `5`, and repair-parent target `6`. Checkpointed provenance supports inspection and resume without recomputing valid completed stages.
+## How Atlas works
+
+```text
+Published structural evidence → active-like reconstruction → constrained variant generation
+→ stability screening → structure construction / relaxation → catalytic + Aβ-interface analysis
+→ liability / developability checks → adversarial review → frozen finalist portfolio
+```
+
+The adaptive pipeline uses typed orchestration and checkpointed, append-only
+artifacts. Evidence dimensions remain independent: there is no hidden “magic
+score”. A bounded critic and explicit failure memory route uncertainty and
+repair decisions, while computational evidence is kept separate from
+experimental claims.
+
+## Architecture
+
+The production path is centered on `adaptive_pipeline.py`, with mechanism-aware
+design in `design/`, evidence-aware screening and critic logic in `adaptive/`,
+candidate-specific structure and geometry analysis in `structure/` and
+`geometry/`, late-stage checks in `late_stage/`, and artifact exports in
+`reporting/`. It uses Python, BioPython, OpenMM, ThermoMPNN, ThermoMPNN-D, and
+a typed orchestration/state system. The [Colab notebook](notebooks/Atlas_DP622_Colab.ipynb)
+is the GPU execution entry point with pinned model revisions.
+
+## Scientific integrity and limitations
+
+- The starting model is the 23WN-derived `active_like_inferred` reconstruction,
+  not an experimentally observed exact active DP622-S2 complex.
+- The exact active DP622-S2 assay construct was not publicly recovered.
+- ThermoMPNN and ThermoMPNN-D provide stability evidence, not activity predictions.
+- Static geometry and interface preservation do not prove cleavage.
+- Replicated MD was excluded from candidate discrimination after reference-validation failure.
+- All five finalists require expression/folding, cleavage, kinetics, selectivity,
+  and Zn-dependence wet-lab validation.
+
+## Explore and reproduce
+
+- [Finalists and funnel](results/gate3/FINALIST_SUMMARY.md)
+- [Final design report](results/gate3/atlas_final_design_report.md)
+- [Combined FASTA](results/gate3/fastas/finalists.fasta)
+- [Reproducibility manifest](results/gate3/reproducibility_manifest.json)
+- [Completion audit](results/gate3/completion_audit.json)
+- [Limitations report](results/gate3/limitations_report.md)
+- [Reproduction guide](docs/reproduction.md)
+
+For quick inspection, start with the links above and the dossier/PDB pairs.
+For code verification, run `python -m pytest -q`. Full scientific execution is
+GPU- and environment-dependent; follow the pinned Colab path in the reproduction
+guide.
+
+## What this demonstrates
+
+Scientific workflow orchestration, computational protein design, evidence and
+provenance engineering, model-disagreement handling, simulation integration,
+reproducible candidate selection, and failure-aware research automation.
+
