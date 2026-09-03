@@ -302,7 +302,7 @@ def test_notebook_configuration_and_stage_cells_are_executable() -> None:
     assert required <= tagged.keys()
     namespace: dict[str, object] = {}
     exec("".join(tagged["atlas-config"]["source"]), namespace)
-    assert namespace["ATLAS_REF"] == "codex/atlas-v1-dynamic-geometry"
+    assert namespace["ATLAS_REF"] == "aa5f61d8a5fbaffb50e1c2fef3b6b3cc275f707c"
     assert "DYNAMICS_MODE" not in namespace
     assert namespace["USE_GOOGLE_DRIVE"] is True
     for index, cell in enumerate(notebook["cells"]):

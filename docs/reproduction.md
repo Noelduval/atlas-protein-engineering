@@ -79,8 +79,9 @@ directory and refuses to overwrite an existing run.
 
 1. Open `notebooks/Atlas_DP622_Colab.ipynb` in Google Colab.
 2. Choose **Runtime → Change runtime type → T4 GPU**.
-3. Confirm the visible `ATLAS_REF` is the branch or immutable commit you intend
-   to review; it defaults to `codex/atlas-v1-dynamic-geometry` for this PR.
+3. Confirm the visible `ATLAS_REF` is the immutable Atlas execution commit
+   `aa5f61d8a5fbaffb50e1c2fef3b6b3cc275f707c`, which matches the completed
+   Gate 3 provenance records.
 4. Run all cells in order. The preflight stops before model work if the runtime,
    checkout, model revisions, input structure, or imports are wrong.
 5. Inspect `known_mutation_validation.csv` before interpreting any novel files.
