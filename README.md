@@ -11,6 +11,12 @@ not validated improvements in Aβ cleavage.
 **Project status:** v1 campaign complete; wet-lab validation is outside the
 scope of this repository.
 
+## My role
+
+I designed and implemented the evidence-aware pipeline, constrained candidate
+generation, provenance tracking, validation gates, finalist reporting, and
+reproducible GPU/Colab execution path.
+
 ## Result
 
 The completed campaign executed this funnel:
@@ -73,6 +79,15 @@ is the GPU execution entry point with pinned model revisions.
 
 ## Explore and reproduce
 
+For a fast technical review:
+
+1. Read this README for the problem, result, and claim boundaries.
+2. Open the [finalist summary](results/gate3/FINALIST_SUMMARY.md).
+3. Inspect one [candidate dossier](results/gate3/dossiers/ATLAS-66C6BB6CAA1C310A.md)
+   and its linked structure.
+4. Run `python -m pytest -q` for the local verification suite.
+5. Open the [Colab notebook](notebooks/Atlas_DP622_Colab.ipynb) for the full GPU path.
+
 - [Finalists and funnel](results/gate3/FINALIST_SUMMARY.md)
 - [Final design report](results/gate3/atlas_final_design_report.md)
 - [Combined FASTA](results/gate3/fastas/finalists.fasta)
@@ -98,3 +113,12 @@ pinned GPU Colab path in the reproduction guide.
 Atlas is released under the [MIT License](LICENSE). Third-party dependencies,
 models, datasets, structures, papers, and reference materials remain subject to
 their own licenses and terms.
+
+## References
+
+- [VITA: Aβ-related metalloprotease reference](references/vita_abeta_metalloprotease.pdf)
+- [23WN structure metadata](references/structures/EMD-69322_metadata.json)
+- [ThermoMPNN](https://github.com/Kuhlman-Lab/ThermoMPNN)
+- [ThermoMPNN-D](https://github.com/Kuhlman-Lab/ThermoMPNN-D)
+- [OpenMM](https://openmm.org/)
+- [LangGraph](https://github.com/langchain-ai/langgraph)
