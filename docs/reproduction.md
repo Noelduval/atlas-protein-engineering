@@ -82,7 +82,7 @@ input, model, dynamics, and validation-policy context matches. Completed raw
 model CSVs and scientific outputs survive a Colab runtime restart. Each model
 stage runs in its own process, and the candidate stage reuses the genuine
 ThermoMPNN exhaustive single-mutant CSV produced before validation. No Rosetta
-license, Docker image, premium Colab tier, or separate cloud VM is required.
+license, premium Colab tier, or separate cloud VM is required.
 The host kernel only orchestrates setup and display. Pinned `uv==0.8.13`
 creates `/content/atlas-science` from managed Python 3.10 because both pinned
 upstream repositories specify Python 3.10 and CUDA 11.7/11.8. PyTorch 2.5.1,
