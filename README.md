@@ -1,11 +1,15 @@
 # Atlas
 
-Atlas is an autonomous computational protein-engineering system that generated
-and screened 5,000 DP622-inspired metalloprotease variants and prioritized five
-experimentally testable candidates for Aβ-related wet-lab evaluation.
+Atlas is a computational protein-engineering pipeline for turning structural
+evidence into a ranked, experiment-ready shortlist. Its completed campaign
+screened 5,000 DP622-inspired metalloprotease variants and prioritized five
+candidates for Aβ-related wet-lab evaluation.
 
 **EXPERIMENTALLY UNTESTED:** these are computationally prioritized hypotheses,
 not validated improvements in Aβ cleavage.
+
+**Project status:** v1 campaign complete; wet-lab validation is outside the
+scope of this repository.
 
 ## Result
 
@@ -26,13 +30,12 @@ The completed campaign executed this funnel:
 
 See the [finalist summary](results/gate3/FINALIST_SUMMARY.md) and [final design report](results/gate3/atlas_final_design_report.md) for the artifact-backed result.
 
-## Why Atlas
+## The problem
 
-Atlas tackles a VITA-inspired problem: optimizing a metalloprotease scaffold for
-Aβ-related cleavage while keeping catalytic chemistry, structural plausibility,
-stability, interface evidence, and developability visible. The challenge is
-not producing one opaque score; it is orchestrating independent evidence,
-recording disagreement, remembering failures, and preserving provenance.
+The project tackles a VITA-inspired design problem: optimize a metalloprotease
+scaffold for Aβ-related cleavage while keeping structural plausibility, stability,
+interface support, and developability visible. The result is a traceable shortlist
+with the evidence and uncertainty behind each candidate.
 
 ## How Atlas works
 
@@ -82,8 +85,16 @@ For a quick review, start with the finalist summary and one dossier/PDB pair.
 For code verification, run `python -m pytest -q`. Full execution follows the
 pinned GPU Colab path in the reproduction guide.
 
-## What this demonstrates
+## Engineering highlights
 
-Scientific workflow orchestration, computational protein design, evidence and
-provenance engineering, model-disagreement handling, simulation integration,
-reproducible candidate selection, and failure-aware research automation.
+- Typed pipeline orchestration with checkpointed runs and resumable stages.
+- Constrained variant generation across single and epistatic mutations.
+- Independent stability, geometry, interface, and developability evidence.
+- Provenance records that preserve model revisions, inputs, and claim boundaries.
+- Explicit failure handling and candidate dossiers designed for review.
+
+## License
+
+Atlas is released under the [MIT License](LICENSE). Third-party dependencies,
+models, datasets, structures, papers, and reference materials remain subject to
+their own licenses and terms.
