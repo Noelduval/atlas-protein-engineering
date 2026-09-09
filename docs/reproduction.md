@@ -6,18 +6,6 @@ The reviewer path is the GPU Colab notebook. Local CPU execution supports the
 structure, geometry, gate logic, tests, and an honest OpenMM attempt, but the
 pinned ThermoMPNN-D epistatic implementation requires CUDA.
 
-## Docker strategy
-
-Atlas v1 intentionally has no Dockerfile. The scientific pivot removes Rosetta,
-so neither a custom Rosetta build nor an official Rosetta image is relevant to
-the active workflow. The official ThermoMPNN projects publish Conda guidance and
-Colab notebooks rather than a versioned Atlas-compatible container. A bespoke
-image would add a CUDA/PyTorch maintenance surface without improving the primary
-reviewer path. The committed Colab notebook, pinned Git revisions, bounded Python
-dependencies, input checksum, and per-run provenance are the reproducibility
-mechanism for v1. A future container should be added only after validating a
-specific CUDA base image against both pinned predictors.
-
 ## Local setup
 
 ```bash
