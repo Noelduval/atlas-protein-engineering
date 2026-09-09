@@ -42,11 +42,10 @@ Published structural evidence → active-like reconstruction → constrained var
 → liability / developability checks → adversarial review → frozen finalist portfolio
 ```
 
-The adaptive pipeline uses typed orchestration and checkpointed, append-only
-artifacts. Evidence dimensions remain independent: there is no hidden “magic
-score”. A bounded critic and explicit failure memory route uncertainty and
-repair decisions, while computational evidence is kept separate from
-experimental claims.
+The pipeline keeps stability, structure, geometry, interface, and developability
+evidence separate before combining them into a ranked shortlist. Each candidate
+retains the evidence and limitations behind its selection, so the final result is
+auditable rather than a single unexplained score.
 
 ## Architecture
 
@@ -79,14 +78,12 @@ is the GPU execution entry point with pinned model revisions.
 - [Limitations report](results/gate3/limitations_report.md)
 - [Reproduction guide](docs/reproduction.md)
 
-For quick inspection, start with the links above and the dossier/PDB pairs.
-For code verification, run `python -m pytest -q`. Full scientific execution is
-GPU- and environment-dependent; follow the pinned Colab path in the reproduction
-guide.
+For a quick review, start with the finalist summary and one dossier/PDB pair.
+For code verification, run `python -m pytest -q`. Full execution follows the
+pinned GPU Colab path in the reproduction guide.
 
 ## What this demonstrates
 
 Scientific workflow orchestration, computational protein design, evidence and
 provenance engineering, model-disagreement handling, simulation integration,
 reproducible candidate selection, and failure-aware research automation.
-
