@@ -190,3 +190,6 @@ figures/
 .external/
 *.zip
 tmp/
+artifacts/
+results/gate3/interactive/
+results/gate3/poster/
