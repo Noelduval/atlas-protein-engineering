@@ -1,0 +1,15 @@
+cff-version: 1.2.0
+title: "Atlas: Evidence-aware computational protein engineering"
+message: "If you use Atlas, please cite this repository."
+type: software
+authors:
+  - family-names: Duval
+    given-names: Noel
+repository-code: https://github.com/Noelduval/atlas-therapeutic-optimization
+license: MIT
+version: 1.0.0
+date-released: 2026-09-09
+abstract: >-
+  A computational protein-engineering pipeline that integrates structural,
+  stability, geometry, interface, and developability evidence to prioritize
+  experimentally testable metalloprotease variants.
