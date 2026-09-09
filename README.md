@@ -11,6 +11,9 @@ not validated improvements in Aβ cleavage.
 **Project status:** v1 campaign complete; wet-lab validation is outside the
 scope of this repository.
 
+**Relevant roles:** computational biology · protein engineering · scientific
+software · research engineering · ML infrastructure
+
 ## My role
 
 I designed and implemented the evidence-aware pipeline, constrained candidate
@@ -36,12 +39,23 @@ The completed campaign executed this funnel:
 
 See the [finalist summary](results/gate3/FINALIST_SUMMARY.md) and [final design report](results/gate3/atlas_final_design_report.md) for the artifact-backed result.
 
+![Atlas candidate funnel](results/gate3/figures/adaptive_design_funnel.png)
+
+*The campaign narrows a constrained variant library through independent evidence
+and review stages. The finalists are hypotheses for experiments, not validated
+therapeutic improvements.*
+
 ## The problem
 
 The project tackles a VITA-inspired design problem: optimize a metalloprotease
 scaffold for Aβ-related cleavage while keeping structural plausibility, stability,
 interface support, and developability visible. The result is a traceable shortlist
 with the evidence and uncertainty behind each candidate.
+
+Here, **Aβ** refers to amyloid beta, and **DP622** is the metalloprotease
+scaffold used as the design target. An **active-like reconstruction** is a
+structure inferred from available structural evidence; it is not presented as a
+direct experimental structure of the exact assay construct.
 
 ## How Atlas works
 
@@ -122,3 +136,11 @@ their own licenses and terms.
 - [ThermoMPNN-D](https://github.com/Kuhlman-Lab/ThermoMPNN-D)
 - [OpenMM](https://openmm.org/)
 - [LangGraph](https://github.com/langchain-ai/langgraph)
+
+## Documentation map
+
+- [Reproduction guide](docs/reproduction.md) — local checks and the full GPU path.
+- [Scientific decisions](docs/scientific_decisions.md) — modeling choices and evidence boundaries.
+- [Limitations](docs/limitations.md) — known technical and scientific constraints.
+- [Final design report](results/gate3/atlas_final_design_report.md) — campaign narrative and final portfolio.
+- [Benchmark analysis](docs/benchmark_failure_analysis.md) — validation findings and how they changed the workflow.
