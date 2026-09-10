@@ -81,7 +81,8 @@ The production path is centered on `adaptive_pipeline.py`. Candidate generation
 lives in `design/`, screening and review logic in `adaptive/`, structure and
 geometry analysis in `structure/` and `geometry/`, late-stage checks in
 `late_stage/`, and artifact exports in `reporting/`. The [Colab notebook](notebooks/Atlas_DP622_Colab.ipynb)
-is the GPU execution entry point.
+contains the pinned GPU reproduction path. Completed campaign outputs are
+available in `results/gate3/`.
 
 ## Scientific integrity and limitations
 
@@ -128,7 +129,7 @@ their own licenses and terms.
 
 ## Documentation map
 
-- [Reproduction guide](docs/reproduction.md): local checks and the full GPU path.
+- [Reproduction guide](docs/reproduction.md): local checks and the GPU reproduction path.
 - [Scientific decisions](docs/scientific_decisions.md): modeling choices and evidence boundaries.
 - [Limitations](docs/limitations.md): known technical and scientific constraints.
 - [Final design report](results/gate3/atlas_final_design_report.md): campaign narrative and final portfolio.

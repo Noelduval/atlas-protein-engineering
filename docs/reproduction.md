@@ -2,14 +2,15 @@
 
 ## Supported paths
 
-The reviewer path is the GPU Colab notebook. Local CPU execution supports the
+The full reproduction path is the GPU Colab notebook. Completed campaign
+outputs are committed under `results/gate3/`. Local CPU execution supports the
 structure, geometry, gate logic, tests, and an honest OpenMM attempt, but the
 pinned ThermoMPNN-D epistatic implementation requires CUDA.
 
 ## Local setup
 
 ```bash
-git clone https://github.com/Noelduval/atlas-therapeutic-optimization.git Atlas
+git clone https://github.com/Noelduval/atlas-protein-engineering.git Atlas
 cd Atlas
 python3 -m venv .venv
 source .venv/bin/activate
