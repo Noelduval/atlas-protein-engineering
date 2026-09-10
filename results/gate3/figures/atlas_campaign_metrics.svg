@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1400" height="620" viewBox="0 0 1400 620" role="img" aria-labelledby="title desc">
-  <title id="title">Atlas campaign at a glance</title>
+  <title id="title">From variant library to experimental shortlist</title>
   <desc id="desc">Atlas screened 5,000 variants and prioritized 5 candidates through four stages of analysis and review.</desc>
   <rect width="1400" height="620" fill="#ffffff"/>
-  <text x="70" y="88" font-family="Arial, Helvetica, sans-serif" font-size="42" font-weight="700" fill="#172033">Atlas campaign at a glance</text>
+  <text x="70" y="88" font-family="Arial, Helvetica, sans-serif" font-size="42" font-weight="700" fill="#172033">From variant library to experimental shortlist</text>
   <text x="70" y="128" font-family="Arial, Helvetica, sans-serif" font-size="21" fill="#5b6475">A constrained search narrowed to five candidates for experimental evaluation.</text>
   <g font-family="Arial, Helvetica, sans-serif">
     <rect x="70" y="205" width="230" height="190" rx="18" fill="#f0edff"/>
