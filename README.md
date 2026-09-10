@@ -48,6 +48,19 @@ scaffold used as the design target. An **active-like reconstruction** is a
 structure inferred from available structural evidence; it is not presented as a
 direct experimental structure of the exact assay construct.
 
+## Scientific starting point
+
+Atlas was inspired by published work on VITA, including the reported DP622-S2
+metalloprotease design for targeted amyloid-beta cleavage.
+
+The exact DP622-S2 assay construct and supporting data were not publicly
+available, so Atlas could not recreate the original experimental system
+directly. Instead, it uses a 23WN-derived active-like reconstruction as a
+computational starting model. The resulting candidates are design hypotheses,
+not reproductions or validations of the original experiments.
+
+See the [VITA article](https://www.vita-journal.com/vita/EN/10.15302/vita.2026.07.0055).
+
 ## How Atlas works
 
 The pipeline runs through five main stages:
