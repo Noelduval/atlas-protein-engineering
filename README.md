@@ -14,6 +14,15 @@ scope of this repository.
 **Relevant roles:** computational biology · protein engineering · scientific
 software · research engineering · ML infrastructure
 
+## Tech stack
+
+- **Language:** Python 3.10–3.12
+- **Core packages:** BioPython, NumPy, Pandas, Matplotlib, Typer, pytest
+- **Workflow:** LangGraph, checkpointed pipeline state, resumable CLI stages
+- **Scientific tools:** OpenMM, ThermoMPNN, ThermoMPNN-D, PDB/mmCIF structures
+- **Execution:** Google Colab with pinned GPU model revisions
+- **Quality:** GitHub Actions, provenance manifests, input checksums, and validation gates
+
 ## My role
 
 I designed and implemented the evidence-aware pipeline, constrained candidate
