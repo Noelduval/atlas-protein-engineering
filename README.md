@@ -48,7 +48,7 @@ The completed campaign executed this funnel:
 
 See the [finalist summary](results/gate3/FINALIST_SUMMARY.md) and [final design report](results/gate3/atlas_final_design_report.md) for the artifact-backed result.
 
-![Atlas candidate funnel](results/gate3/figures/adaptive_design_funnel.png)
+![Atlas candidate funnel](results/gate3/figures/atlas_campaign_metrics.svg)
 
 *The campaign narrows a constrained variant library through independent evidence
 and review stages. The finalists are hypotheses for experiments, not validated
