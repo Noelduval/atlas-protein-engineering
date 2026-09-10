@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="620" viewBox="0 0 1400 620" role="img" aria-labelledby="title desc">
+  <title id="title">From variant library to experimental shortlist</title>
+  <desc id="desc">Atlas screened 5,000 variants and prioritized 5 candidates through four stages of analysis and review.</desc>
+  <rect width="1400" height="620" fill="#ffffff"/>
+  <text x="70" y="88" font-family="Arial, Helvetica, sans-serif" font-size="42" font-weight="700" fill="#172033">From variant library to experimental shortlist</text>
+  <text x="70" y="128" font-family="Arial, Helvetica, sans-serif" font-size="21" fill="#5b6475">A constrained search narrowed to five candidates for experimental evaluation.</text>
+  <g font-family="Arial, Helvetica, sans-serif">
+    <rect x="70" y="205" width="230" height="190" rx="18" fill="#f0edff"/>
+    <text x="100" y="265" font-size="18" font-weight="700" fill="#3f2d7f">GENERATED</text>
+    <text x="100" y="335" font-size="50" font-weight="700" fill="#172033">5,000</text>
+    <text x="100" y="370" font-size="20" fill="#5b6475">variants screened</text>
+    <text x="315" y="314" text-anchor="middle" font-size="36" fill="#9aa2b1">→</text>
+
+    <rect x="350" y="205" width="230" height="190" rx="18" fill="#eaf3f8"/>
+    <text x="380" y="265" font-size="18" font-weight="700" fill="#326b91">FILTERED</text>
+    <text x="380" y="335" font-size="50" font-weight="700" fill="#172033">500</text>
+    <text x="380" y="370" font-size="20" fill="#5b6475">broad survivors</text>
+    <text x="595" y="314" text-anchor="middle" font-size="36" fill="#9aa2b1">→</text>
+
+    <rect x="630" y="205" width="230" height="190" rx="18" fill="#e4f5f3"/>
+    <text x="660" y="265" font-size="18" font-weight="700" fill="#22938f">ANALYZED</text>
+    <text x="660" y="335" font-size="50" font-weight="700" fill="#172033">146</text>
+    <text x="660" y="370" font-size="20" fill="#5b6475">structural cases</text>
+    <text x="875" y="314" text-anchor="middle" font-size="36" fill="#9aa2b1">→</text>
+
+    <rect x="910" y="205" width="180" height="190" rx="18" fill="#e7f7ee"/>
+    <text x="940" y="265" font-size="18" font-weight="700" fill="#218653">REVIEWED</text>
+    <text x="940" y="335" font-size="50" font-weight="700" fill="#172033">10</text>
+    <text x="940" y="370" font-size="20" fill="#5b6475">candidates</text>
+    <text x="1105" y="314" text-anchor="middle" font-size="36" fill="#9aa2b1">→</text>
+
+    <rect x="1140" y="205" width="190" height="190" rx="18" fill="#e4f7b8"/>
+    <text x="1170" y="265" font-size="18" font-weight="700" fill="#4e7813">PRIORITIZED</text>
+    <text x="1170" y="335" font-size="50" font-weight="700" fill="#172033">5</text>
+    <text x="1170" y="370" font-size="20" fill="#5b6475">finalists</text>
+  </g>
+  <text x="70" y="505" font-family="Arial, Helvetica, sans-serif" font-size="19" fill="#5b6475">Computational result only: all five finalists require wet-lab validation.</text>
+</svg>
