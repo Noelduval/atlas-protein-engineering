@@ -16,6 +16,8 @@ PSDASDEALIYALAHELAHLIIAEDLERRGLPLSAVPPGVVEGLADVFGATAYAAYLELKGEKVTLEKWREMMLRLAEET
 ERIGREAGLEAHVEGGRIAAEIARRTNEEEAQKLIEEVKPLVEFILGLLRVARTA
 ```
 
+**Committed exports:** [FASTA](../fastas/ATLAS-0215A1AE2C58FD57.fasta) · [PDB](../structures/ATLAS-0215A1AE2C58FD57.pdb)
+
 ## Design hypothesis
 
 Combine Q153M and G65M as an explicit epistasis hypothesis from complementary single-mutant designs.

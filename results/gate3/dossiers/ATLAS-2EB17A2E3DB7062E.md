@@ -16,6 +16,8 @@ PSDASDEALIYALAHELAHLIIAEDLERRGLPLSAVPPGVVEGLADVFGLTAYAAYLELKGEKVTLEKWREMQLRLAEET
 ERIGREAGLEAHVEGGRIAAEIARRTNEEEAQKLIEEVKPLVEFILGLLRVARTA
 ```
 
+**Committed exports:** [FASTA](../fastas/ATLAS-2EB17A2E3DB7062E.fasta) · [PDB](../structures/ATLAS-2EB17A2E3DB7062E.pdb)
+
 ## Design hypothesis
 
 Test whether A130L can make a conservative chemistry change within the wild-type residue family while preserving DP622 scaffold packing and secondary-structure integrity.

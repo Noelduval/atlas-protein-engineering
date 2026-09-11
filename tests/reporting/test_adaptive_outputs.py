@@ -168,7 +168,10 @@ def test_adaptive_outputs_write_dossier_exports_figures_and_report(tmp_path: Pat
     assert (tmp_path / "README.md").is_file()
     assert (tmp_path / "FINALISTS.md").is_file()
     assert (tmp_path / "reports" / "limitations_report.md").is_file()
-    assert json.loads(bundle.reproducibility_manifest.read_text())["candidate_library_sha256"]
+    manifest = json.loads(bundle.reproducibility_manifest.read_text())
+    assert manifest["candidate_library_sha256"]
+    assert manifest["package_versions"]["atlas-protein-engineering"]
+    assert "atlas-therapeutic-optimization" not in manifest["package_versions"]
 
 
 def test_zero_finalist_report_keeps_near_miss_blockers_first_class(tmp_path: Path) -> None:

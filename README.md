@@ -5,6 +5,12 @@ stability evidence to prioritize mutation hypotheses for laboratory testing.
 Its completed campaign screened 5,000 DP622-inspired metalloprotease variants
 and selected five candidates for Aβ-related evaluation.
 
+For a recruiter or hiring manager, Atlas is a reproducible Python research
+software project that I built end to end: candidate generation, evidence
+tracking, validation gates, finalist reporting, and the GPU/Colab execution
+path. Its output is a small, reviewable set of computational hypotheses—not
+experimentally validated enzyme improvements.
+
 **These are computational predictions, not experimentally validated improvements
 in Aβ cleavage.**
 
@@ -26,13 +32,15 @@ The completed campaign executed this funnel:
 The campaign narrowed 5,000 unique legal variants to 500 broad survivors, 146
 structure-level analyses, 10 reviewed candidates, and five finalists.
 
-| Candidate | Mutations | Why it was selected |
-| --- | --- | --- |
-| [ATLAS-0215A1AE2C58FD57](results/gate3/dossiers/ATLAS-0215A1AE2C58FD57.md) | G65M/Q153M | Function-oriented change paired with distal support |
-| [ATLAS-1FB316267B702519](results/gate3/dossiers/ATLAS-1FB316267B702519.md) | A16C/Q153C | Orthogonal-mechanism epistatic double |
-| [ATLAS-2EB17A2E3DB7062E](results/gate3/dossiers/ATLAS-2EB17A2E3DB7062E.md) | A130L | Conservative distal-stability explorer |
-| [ATLAS-39F921440EC002E5](results/gate3/dossiers/ATLAS-39F921440EC002E5.md) | E104V | Second-shell preorganization explorer |
-| [ATLAS-66C6BB6CAA1C310A](results/gate3/dossiers/ATLAS-66C6BB6CAA1C310A.md) | A37Y | Substrate-interface explorer |
+| Candidate | Mutations | Files | Why it was selected |
+| --- | --- | --- | --- |
+| [ATLAS-0215A1AE2C58FD57](results/gate3/dossiers/ATLAS-0215A1AE2C58FD57.md) | G65M/Q153M | [FASTA](results/gate3/fastas/ATLAS-0215A1AE2C58FD57.fasta) · [PDB](results/gate3/structures/ATLAS-0215A1AE2C58FD57.pdb) | Function-oriented change paired with distal support |
+| [ATLAS-1FB316267B702519](results/gate3/dossiers/ATLAS-1FB316267B702519.md) | A16C/Q153C | [FASTA](results/gate3/fastas/ATLAS-1FB316267B702519.fasta) · [PDB](results/gate3/structures/ATLAS-1FB316267B702519.pdb) | Orthogonal-mechanism epistatic double |
+| [ATLAS-2EB17A2E3DB7062E](results/gate3/dossiers/ATLAS-2EB17A2E3DB7062E.md) | A130L | [FASTA](results/gate3/fastas/ATLAS-2EB17A2E3DB7062E.fasta) · [PDB](results/gate3/structures/ATLAS-2EB17A2E3DB7062E.pdb) | Conservative distal-stability explorer |
+| [ATLAS-39F921440EC002E5](results/gate3/dossiers/ATLAS-39F921440EC002E5.md) | E104V | [FASTA](results/gate3/fastas/ATLAS-39F921440EC002E5.fasta) · [PDB](results/gate3/structures/ATLAS-39F921440EC002E5.pdb) | Second-shell preorganization explorer |
+| [ATLAS-66C6BB6CAA1C310A](results/gate3/dossiers/ATLAS-66C6BB6CAA1C310A.md) | A37Y | [FASTA](results/gate3/fastas/ATLAS-66C6BB6CAA1C310A.fasta) · [PDB](results/gate3/structures/ATLAS-66C6BB6CAA1C310A.pdb) | Substrate-interface explorer |
+
+Each finalist is an explicit 215-aa sequence; its dossier, FASTA, and PDB are linked above, and all five sequences are available in the [combined finalist FASTA](results/gate3/fastas/finalists.fasta).
 
 See the [finalist summary](results/gate3/FINALIST_SUMMARY.md) and [final design report](results/gate3/atlas_final_design_report.md) for the full result and supporting files.
 
@@ -109,8 +117,22 @@ and its linked structure.
 - [Limitations report](results/gate3/limitations_report.md)
 - [Reproduction guide](docs/reproduction.md)
 
-For code verification, run `python -m pytest -q`. Full execution follows the
-pinned GPU Colab path in the reproduction guide.
+## Verification and reproduction boundaries
+
+CI runs the local Python test suite across Python 3.10, 3.11, and 3.12. Those
+tests cover the package’s parsing, routing, evidence handling, structural and
+geometry logic, and test boundaries; they do not run GPU-dependent
+ThermoMPNN/ThermoMPNN-D inference or reproduce the full 5,000-candidate
+campaign.
+
+For the full campaign, use the pinned Google Colab T4 path in the
+[reproduction guide](docs/reproduction.md). It requires the pinned Atlas
+commit, pinned ThermoMPNN and ThermoMPNN-D commits, CUDA-capable PyTorch, and
+the external model repositories and weights described there. Completed
+campaign outputs are committed under `results/gate3/` for inspection without
+rerunning the GPU workflow.
+
+For local code verification, run `python -m pytest -q`.
 
 ## License
 

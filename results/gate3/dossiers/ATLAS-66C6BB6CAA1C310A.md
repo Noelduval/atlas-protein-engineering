@@ -16,6 +16,8 @@ PSDASDEALIYALAHELAHLIIAEDLERRGLPLSAVPPGVVEGLADVFGATAYAAYLELKGEKVTLEKWREMQLRLAEET
 ERIGREAGLEAHVEGGRIAAEIARRTNEEEAQKLIEEVKPLVEFILGLLRVARTA
 ```
 
+**Committed exports:** [FASTA](../fastas/ATLAS-66C6BB6CAA1C310A.fasta) · [PDB](../structures/ATLAS-66C6BB6CAA1C310A.pdb)
+
 ## Design hypothesis
 
 Test whether A37Y can increase local side-chain volume by approximately 105.0 å³ to tune packing while preserving resolved Aβ pose and catalytic preorganization.

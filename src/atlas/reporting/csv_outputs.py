@@ -44,7 +44,7 @@ def write_provenance(
     output = Path(path)
     output.parent.mkdir(parents=True, exist_ok=True)
     packages: dict[str, str] = {}
-    for package in ("atlas-therapeutic-optimization", "biopython", "numpy", "pandas", "matplotlib", "openmm", "torch"):
+    for package in ("atlas-protein-engineering", "biopython", "numpy", "pandas", "matplotlib", "openmm", "torch"):
         try:
             packages[package] = version(package)
         except PackageNotFoundError:

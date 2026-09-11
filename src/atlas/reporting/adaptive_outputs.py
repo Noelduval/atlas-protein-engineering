@@ -837,7 +837,7 @@ Finalists, if any, are **EXPERIMENTALLY UNTESTED BEST-SUPPORTED WET-LAB HYPOTHES
     )
 
     package_versions = {}
-    for name in ("atlas-therapeutic-optimization", "numpy", "pandas", "biopython", "openmm", "langgraph", "torch"):
+    for name in ("atlas-protein-engineering", "numpy", "pandas", "biopython", "openmm", "langgraph", "torch"):
         try:
             package_versions[name] = importlib.metadata.version(name)
         except importlib.metadata.PackageNotFoundError:
