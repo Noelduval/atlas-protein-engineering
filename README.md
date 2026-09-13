@@ -32,17 +32,28 @@ The completed campaign executed this funnel:
 The campaign narrowed 5,000 unique legal variants to 500 broad survivors, 146
 structure-level analyses, 10 reviewed candidates, and five finalists.
 
+![Five computationally prioritized Atlas finalists](docs/assets/finalists/atlas-finalists.png)
+
+*Five computationally prioritized Atlas finalists. Molecular models are shown
+for structural inspection; all candidates remain experimentally untested.*
+
 | Candidate | Mutations | Files | Why it was selected |
 | --- | --- | --- | --- |
-| [ATLAS-0215A1AE2C58FD57](results/gate3/dossiers/ATLAS-0215A1AE2C58FD57.md) | G65M/Q153M | [FASTA](results/gate3/fastas/ATLAS-0215A1AE2C58FD57.fasta) · [PDB](results/gate3/structures/ATLAS-0215A1AE2C58FD57.pdb) | Function-oriented change paired with distal support |
-| [ATLAS-1FB316267B702519](results/gate3/dossiers/ATLAS-1FB316267B702519.md) | A16C/Q153C | [FASTA](results/gate3/fastas/ATLAS-1FB316267B702519.fasta) · [PDB](results/gate3/structures/ATLAS-1FB316267B702519.pdb) | Orthogonal-mechanism epistatic double |
-| [ATLAS-2EB17A2E3DB7062E](results/gate3/dossiers/ATLAS-2EB17A2E3DB7062E.md) | A130L | [FASTA](results/gate3/fastas/ATLAS-2EB17A2E3DB7062E.fasta) · [PDB](results/gate3/structures/ATLAS-2EB17A2E3DB7062E.pdb) | Conservative distal-stability explorer |
-| [ATLAS-39F921440EC002E5](results/gate3/dossiers/ATLAS-39F921440EC002E5.md) | E104V | [FASTA](results/gate3/fastas/ATLAS-39F921440EC002E5.fasta) · [PDB](results/gate3/structures/ATLAS-39F921440EC002E5.pdb) | Second-shell preorganization explorer |
-| [ATLAS-66C6BB6CAA1C310A](results/gate3/dossiers/ATLAS-66C6BB6CAA1C310A.md) | A37Y | [FASTA](results/gate3/fastas/ATLAS-66C6BB6CAA1C310A.fasta) · [PDB](results/gate3/structures/ATLAS-66C6BB6CAA1C310A.pdb) | Substrate-interface explorer |
+| [ATLAS-0215A1AE2C58FD57](results/gate3/dossiers/ATLAS-0215A1AE2C58FD57.md) | [G65M/Q153M](docs/assets/finalists/g65m-q153m.png) | [FASTA](results/gate3/fastas/ATLAS-0215A1AE2C58FD57.fasta) · [PDB](results/gate3/structures/ATLAS-0215A1AE2C58FD57.pdb) | Function-oriented change paired with distal support |
+| [ATLAS-1FB316267B702519](results/gate3/dossiers/ATLAS-1FB316267B702519.md) | [A16C/Q153C](docs/assets/finalists/a16c-q153c.png) | [FASTA](results/gate3/fastas/ATLAS-1FB316267B702519.fasta) · [PDB](results/gate3/structures/ATLAS-1FB316267B702519.pdb) | Orthogonal-mechanism epistatic double |
+| [ATLAS-2EB17A2E3DB7062E](results/gate3/dossiers/ATLAS-2EB17A2E3DB7062E.md) | [A130L](docs/assets/finalists/a130l.png) | [FASTA](results/gate3/fastas/ATLAS-2EB17A2E3DB7062E.fasta) · [PDB](results/gate3/structures/ATLAS-2EB17A2E3DB7062E.pdb) | Conservative distal-stability explorer |
+| [ATLAS-39F921440EC002E5](results/gate3/dossiers/ATLAS-39F921440EC002E5.md) | [E104V](docs/assets/finalists/e104v.png) | [FASTA](results/gate3/fastas/ATLAS-39F921440EC002E5.fasta) · [PDB](results/gate3/structures/ATLAS-39F921440EC002E5.pdb) | Second-shell preorganization explorer |
+| [ATLAS-66C6BB6CAA1C310A](results/gate3/dossiers/ATLAS-66C6BB6CAA1C310A.md) | [A37Y](docs/assets/finalists/a37y.png) | [FASTA](results/gate3/fastas/ATLAS-66C6BB6CAA1C310A.fasta) · [PDB](results/gate3/structures/ATLAS-66C6BB6CAA1C310A.pdb) | Substrate-interface explorer |
 
 Each finalist is an explicit 215-aa sequence; its dossier, FASTA, and PDB are linked above, and all five sequences are available in the [combined finalist FASTA](results/gate3/fastas/finalists.fasta).
 
 See the [finalist summary](results/gate3/FINALIST_SUMMARY.md) and [final design report](results/gate3/atlas_final_design_report.md) for the full result and supporting files.
+
+<img src="docs/assets/finalists/a37y-interface.png" alt="A37Y mutation and resolved Aβ fragment structural context" width="800">
+
+*A37Y was retained as an interface-oriented hypothesis. Its proximity to the
+resolved Aβ fragment provides structural context, not evidence of improved
+catalysis.*
 
 ## The problem
 
